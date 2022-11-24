@@ -2,3 +2,7 @@ known_nodes:
   - [blockchain-ucoin-1, 8333]
   - [blockchain-ucoin-2, 8333]
   - [blockchain-ucoin-3, 8333]
+
+blockchain:
+  initial_reward: 50
+  initial_bits: 0x1f1fffff # 0x1d00ffff

@@ -5,3 +5,6 @@ archive/
 .env
 *.log
 *.pyc
+privkey.pem
+draft.py
+tempCodeRunnerFile.py

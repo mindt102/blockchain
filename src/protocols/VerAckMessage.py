@@ -16,7 +16,7 @@ class VerAckMessage:
         return cls()
 
     @classmethod
-    def handle(cls, node, host, payload):
+    def handler(cls, node, host, payload):
         node.peers[host].received_verack()
 
     def __repr__(self):

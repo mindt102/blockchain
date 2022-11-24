@@ -5,4 +5,4 @@ services:
     build: .
     image: ucoin
     deploy:
-      replicas: 2
+      replicas: 3

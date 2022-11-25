@@ -22,7 +22,7 @@ Transaction(
         return len(self.inputs).to_bytes(4, 'little') + inputs_bytes + len(self.outputs).to_bytes(4, 'little') + outputs_bytes
 
     @classmethod
-    def parse(cls, stream: bytes) -> Self:
+    def parse(cls, stream: bytes) -> tuple[Self, bytes]:
         num_inputs = int.from_bytes(stream[:4], 'little')
         stream = stream[4:]
         inputs = []
@@ -37,4 +37,4 @@ Transaction(
             txout, stream = TxOut.parse(stream)
             outputs.append(txout)
 
-        return cls(inputs, outputs)
+        return cls(inputs, outputs), stream

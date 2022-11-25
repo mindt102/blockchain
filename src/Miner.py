@@ -23,12 +23,13 @@ class Miner(Role):
                     break
 
     def __idle(self):
-        candidate_genesis = self.get_blockchain().genesis_block
+        candidate_genesis = self.get_blockchain().get_genesis_block()
         candidate_header = candidate_genesis.get_header()
         self.logger.info(f'nonce: {candidate_header.get_nonce()}')
         if candidate_header.check_hash():
-            self.logger.info(
-                f"Found genesis block")
+            self.logger.info(candidate_genesis)
+            with open('genesis_block.dat', 'wb') as f:
+                f.write(candidate_genesis.serialize())
             return True
         else:
             candidate_header.update_nonce()

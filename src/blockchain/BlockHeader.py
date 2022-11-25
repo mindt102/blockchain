@@ -13,11 +13,16 @@ class BlockHeader:
             timestamp = int(time.time())
         self.__timestamp = timestamp
         self.__bits = bits
-        self.__nonce = 10000 * random.randint(10, 100)
+        print(nonce)
+        if not nonce:
+            nonce = 10000 * random.randint(10, 100)
+        self.__nonce = nonce
+
+    def get_hash(self) -> bytes:
+        return hash256(self.serialize())
 
     def check_hash(self) -> bool:
-        hash_result = hash256(self.serialize())
-        return int.from_bytes(hash_result) < bits_to_target(self.get_bits())
+        return int.from_bytes(self.get_hash()) < bits_to_target(self.get_bits())
 
     def update_nonce(self) -> None:
         self.__nonce += 1
@@ -27,6 +32,15 @@ class BlockHeader:
 
     def get_bits(self) -> int:
         return self.__bits
+
+    def get_timestamp(self) -> int:
+        return self.__timestamp
+
+    def get_prev_block_hash(self) -> bytes:
+        return self.__prev_block_hash
+
+    def __repr__(self) -> str:
+        return f'BlockHeader(prev_block_hash={self.__prev_block_hash.hex()}, merkle_root={self.__merkle_root.hex()}, timestamp={self.__timestamp}, bits={self.__bits}, nonce={self.__nonce})'
 
     def serialize(self) -> bytes:
         return self.__prev_block_hash + self.__merkle_root + self.__timestamp.to_bytes(4, 'little') + self.get_bits().to_bytes(4, 'little') + self.__nonce.to_bytes(4, 'little')

@@ -5,4 +5,7 @@ known_nodes:
 
 blockchain:
   initial_reward: 50
-  initial_bits: 0x1f1fffff # 0x1d00ffff
+  initial_bits: 0x1f0fffff # 0x1d00ffff
+  genesis_block_path: genesis_block.dat
+miner:
+  logging_rate: 100

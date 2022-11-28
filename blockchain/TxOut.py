@@ -11,8 +11,7 @@ class TxOut:
         return self.amount.to_bytes(8, 'little') + self.locking_script.serialize()
 
     def __repr__(self) -> str:
-        return f'''
-TxOut(
+        return f'''TxOut(
     amount={self.amount},
     locking_script={self.locking_script}
 )'''

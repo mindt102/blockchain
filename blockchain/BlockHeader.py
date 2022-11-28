@@ -13,7 +13,6 @@ class BlockHeader:
             timestamp = int(time.time())
         self.__timestamp = timestamp
         self.__bits = bits
-        print(nonce)
         if not nonce:
             nonce = 10000 * random.randint(10, 100)
         self.__nonce = nonce
@@ -40,7 +39,13 @@ class BlockHeader:
         return self.__prev_block_hash
 
     def __repr__(self) -> str:
-        return f'BlockHeader(prev_block_hash={self.__prev_block_hash.hex()}, merkle_root={self.__merkle_root.hex()}, timestamp={self.__timestamp}, bits={self.__bits}, nonce={self.__nonce})'
+        return f'''BlockHeader(
+    prev_block_hash={self.__prev_block_hash.hex()}, 
+    merkle_root={self.__merkle_root.hex()}, 
+    timestamp={self.__timestamp}, 
+    bits={self.__bits}, 
+    nonce={self.__nonce}
+)'''
 
     def serialize(self) -> bytes:
         return self.__prev_block_hash + self.__merkle_root + self.__timestamp.to_bytes(4, 'little') + self.get_bits().to_bytes(4, 'little') + self.__nonce.to_bytes(4, 'little')

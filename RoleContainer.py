@@ -5,6 +5,7 @@ class RoleContainer:
         self.__wallet = None  # type: ignore
         self.__miner = None  # type: ignore
         self.__blockchain = None  # type: ignore
+        self.__network = None  # type: ignore
 
     def set_wallet(self, wallet):
         self.__wallet = wallet
@@ -15,6 +16,9 @@ class RoleContainer:
     def set_blockchain(self, blockchain):
         self.__blockchain = blockchain
 
+    def set_network(self, network):
+        self.__network = network
+
     def get_wallet(self):
         return self.__wallet
 
@@ -23,3 +27,6 @@ class RoleContainer:
 
     def get_blockchain(self):
         return self.__blockchain
+
+    def get_network(self):
+        return self.__network

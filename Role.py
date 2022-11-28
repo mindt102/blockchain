@@ -9,7 +9,7 @@ class Role(threading.Thread):
     logger = utils.get_logger(__name__)
     __roles = RoleContainer()
 
-    def __init__(self, wallet=None, miner=None, blockchain=None):  # type: ignore
+    def __init__(self, wallet=None, miner=None, blockchain=None, network=None):  # type: ignore
         self.q = queue.Queue()
         self.q_timeout = 1.0/60
         if wallet:
@@ -18,6 +18,8 @@ class Role(threading.Thread):
             self.__roles.set_miner(miner)
         if blockchain:
             self.__roles.set_blockchain(blockchain)
+        if network:
+            self.__roles.set_network(network)
         super().__init__()
 
     def _rpc(func):  # type: ignore
@@ -37,3 +39,6 @@ class Role(threading.Thread):
 
     def get_blockchain(self):
         return self.__roles.get_blockchain()
+
+    def get_network(self):
+        return self.__roles.get_network()

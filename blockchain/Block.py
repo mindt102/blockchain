@@ -23,8 +23,8 @@ class Block:
     def __repr__(self) -> str:
         return f'''Block(
     header = {self.__header},
-    transactions = {self.__transactions})
-'''
+    transactions = {self.__transactions}
+)'''
 
     def serialize(self) -> bytes:
         return self.__header.serialize() + b''.join([tx.serialize() for tx in self.__transactions])

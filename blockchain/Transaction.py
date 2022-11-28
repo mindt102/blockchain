@@ -10,8 +10,7 @@ class Transaction:
         self.outputs = outputs
 
     def __repr__(self) -> str:
-        return f'''
-Transaction(
+        return f'''Transaction(
     inputs={self.inputs}, 
     outputs={self.outputs}
 )'''

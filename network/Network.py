@@ -1,20 +1,21 @@
+import queue
 import random
 import select
 import socket
 import threading
-import queue
-from Role import Role
 
+from protocols import InvItem, InvMessage, messages, MSG_BLOCK
 import utils
-import protocols
-from network import Peer, NetworkEnvelope
+from network import NetworkEnvelope, Peer
+from Role import Role
 
 
 class Network(Role):
+    '''Provide networking functionality'''
     logger = utils.get_logger(__name__)
 
-    def __init__(self, server_host, server_port, maxpeers, node_id=None):
-        self.id = node_id if node_id else random.getrandbits(64)
+    def __init__(self, server_host, server_port, maxpeers):
+        self.id = random.getrandbits(64)
         self.host = socket.gethostbyname(server_host)
         self.port = server_port
         self.maxpeers = maxpeers
@@ -26,7 +27,7 @@ class Network(Role):
 
         self.__init_handlers()
 
-        super().__init__()
+        super().__init__(network=self)
 
     def run(self):
         while True:
@@ -59,6 +60,7 @@ class Network(Role):
 
     @Role._rpc  # type: ignore
     def discover_peers(self, known_nodes):
+        '''Send a version message to all known nodes'''
         for known_node in known_nodes:
             host, port = known_node
 
@@ -81,9 +83,21 @@ class Network(Role):
             except:
                 self.logger.exception(f"Could not connect to {host}:{port}")
 
+    @Role._rpc  # type: ignore
+    def broadcast_new_block(self, block_hash: bytes):
+        '''Broadcast a new block to all peers'''
+        item = InvItem(MSG_BLOCK, block_hash)
+        message = InvMessage([item])
+        self.__broadcast(message)
+
+    def __broadcast(self, message):
+        self.logger.info(f"Broadcasting {message.command}")
+        for peer in self.peers.values():
+            peer.send(message)
+
     def __init_handlers(self):
         self.__handlers = {}
-        for message in protocols.messages:
+        for message in messages:
             self.__handlers[message.command] = message.handler
 
     def __make_server_sock(self):
@@ -119,6 +133,7 @@ class Network(Role):
         client_sock.close()
 
     def add_peer(self, host, port) -> Peer:
+        '''Add a peer to the list of peers'''
         if host not in self.peers:
             if len(self.peers) == self.maxpeers:
                 raise RuntimeError("Reached max peers")
@@ -127,3 +142,13 @@ class Network(Role):
             self.peer_lock.release()
 
         return self.peers[host]
+
+    def get_peer(self, host) -> Peer:
+        '''Get a peer from the list of peers'''
+        if host in self.peers:
+            return self.peers[host]
+        else:
+            return None
+
+    def get_peers(self):
+        return self.peers

@@ -17,7 +17,7 @@ class Peer:
         self.version_received = False
         self.verack_received = False
 
-    def shookhand(self):
+    def is_handshake_done(self):
         return self.version_sent and self.version_received and self.verack_received
 
     def received_version(self):
@@ -41,9 +41,8 @@ class Peer:
 
     def send_version(self, server_id, server_host, server_port):
         version = protocols.VersionMessage(nonce=server_id)
-        version.addr_recv = NetworkAddress(ip=self.host, port=self.port)
-        version.addr_from = NetworkAddress(ip=server_host, port=server_port)
-
+        version.set_addr_recv(NetworkAddress(ip=self.host, port=self.port))
+        version.set_addr_from(NetworkAddress(ip=server_host, port=server_port))
         try:
             self.send(version)
             self.sent_version()

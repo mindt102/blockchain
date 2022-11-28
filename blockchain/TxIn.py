@@ -12,8 +12,7 @@ class TxIn:
         return self.prev_tx + self.output_index.to_bytes(4, 'little') + self.unlocking_script.serialize()
 
     def __repr__(self) -> str:
-        return f'''
-TxIn(
+        return f'''TxIn(
     prev_tx={self.prev_tx},
     output_index={self.output_index},
     unlocking_script={self.unlocking_script}

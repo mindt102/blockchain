@@ -1,12 +1,13 @@
 
-import yaml
-from Miner import Miner
-from Wallet import Wallet
-from blockchain import Blockchain
-import utils
 import socket
-from network import Network
 
+import yaml
+
+import utils
+from blockchain import Blockchain
+from Miner import Miner
+from network import Network
+from Wallet import Wallet
 
 if __name__ == '__main__':
     logger = utils.get_logger(__name__)
@@ -29,7 +30,7 @@ if __name__ == '__main__':
 
         blockchain = Blockchain(config=config["blockchain"])
         wallet = Wallet()
-        miner = Miner()
+        miner = Miner(config=config["miner"])
         miner.start()
 
     except:

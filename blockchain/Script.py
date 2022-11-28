@@ -15,6 +15,7 @@ class Script:
 
     @ classmethod
     def get_unlock(cls, privkey: bytes) -> Self:
+        # TODO: Implement
         return cls([privkey])
 
     def validate(self) -> bool:

@@ -39,7 +39,7 @@ class Miner(Role):
                 self.__new_block_found = True
                 self.logger.info('New block found')
                 # print(self.__candidate_block)
-                self.get_network().broadcast_new_block(candidate_header.get_hash())
+                self.get_network().broadcast_new_block(self.__candidate_block)
                 return True
             else:
                 candidate_header.update_nonce()
@@ -50,6 +50,7 @@ class Miner(Role):
     def receive_new_block(self):
         # TODO: IMPLEMENT
         self.__new_block_received = True
+        self.logger.debug('New block received')
 
     def reset_candidate_block(self):
         candidate_txs = self.__get_candidate_txs()

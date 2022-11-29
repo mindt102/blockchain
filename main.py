@@ -31,6 +31,7 @@ if __name__ == '__main__':
         blockchain = Blockchain(config=config["blockchain"])
         wallet = Wallet()
         miner = Miner(config=config["miner"])
+        blockchain.start()
         miner.start()
 
     except:

@@ -1,3 +1,4 @@
+import queue
 from Role import Role
 from blockchain import Block, Transaction
 from utils import bits_to_target
@@ -13,6 +14,14 @@ class Blockchain(Role):
         self.__genesis_block_path = config["genesis_block_path"]
         self.__genesis_block = self.__init_genesis_block()
         super().__init__(blockchain=self)
+
+    def run(self) -> None:
+        while True:
+            try:
+                func, args, kwargs = self.q.get(timeout=self.q_timeout)
+                func(*args, **kwargs)
+            except queue.Empty:
+                pass
 
     def get_reward(self) -> int:
         return self.__reward
@@ -41,3 +50,25 @@ class Blockchain(Role):
         with open(self.__genesis_block_path, 'rb') as f:
             block = Block.parse(f.read())[0]
         return block
+
+    @Role._rpc
+    def validate_block(self, block: Block) -> bool:
+        return self.__validate_block(block)
+
+    def __validate_block(self, block: Block) -> bool:
+        #TODO: IMPLEMENT
+        return True
+
+    @Role._rpc
+    def receive_new_block(self, block: Block) -> None:
+        # TODO: Drop if block already exists
+
+        if not self.__validate_block(block):
+            return
+        self.__add_block(block)
+        self.get_miner().receive_new_block()
+        # self.get_network().broadcast_new_block(block)
+
+    def __add_block(self, block: Block) -> None:
+        #TODO: IMPLEMENT
+        pass

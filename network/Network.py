@@ -4,7 +4,7 @@ import select
 import socket
 import threading
 
-from protocols import InvItem, InvMessage, messages, MSG_BLOCK
+from protocols import BlockMessage, InvItem, InvMessage, messages, MSG_BLOCK
 import utils
 from network import NetworkEnvelope, Peer
 from Role import Role
@@ -84,11 +84,13 @@ class Network(Role):
                 self.logger.exception(f"Could not connect to {host}:{port}")
 
     @Role._rpc  # type: ignore
-    def broadcast_new_block(self, block_hash: bytes):
+    def broadcast_new_block(self, block):
         '''Broadcast a new block to all peers'''
-        item = InvItem(MSG_BLOCK, block_hash)
-        message = InvMessage([item])
-        self.__broadcast(message)
+        # item = InvItem(MSG_BLOCK, block_hash)
+        # message = InvMessage([item])
+        blockmsg = BlockMessage(block)
+        # self.logger.info(f"Broadcasting new block {blockmsg}")
+        self.__broadcast(blockmsg)
 
     def __broadcast(self, message):
         self.logger.info(f"Broadcasting {message.command}")

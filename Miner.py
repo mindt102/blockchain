@@ -15,6 +15,8 @@ class Miner(Role):
         self.__new_block_found = True
         self.__new_block_received = False
         self.__candidate_block = None
+
+        self.__is_network_ready = False
         super().__init__(miner=self)
 
     def run(self):
@@ -23,8 +25,9 @@ class Miner(Role):
                 func, args, kwargs = self.q.get(timeout=self.q_timeout)
                 func(*args, **kwargs)
             except queue.Empty:
-                if self.__idle():
-                    break
+                if self.__is_network_ready:
+                    if self.__idle():
+                        break
 
     def __idle(self):
         if self.__new_block_found:
@@ -82,3 +85,9 @@ class Miner(Role):
     def get_tx_by_hash(self, tx_hash: bytes) -> Transaction:
         # TODO: IMPLEMENT
         return None
+
+    def set_network_status(self, status: bool = True):
+        self.__is_network_ready = status
+
+    def get_network_status(self) -> bool:
+        return self.__is_network_ready

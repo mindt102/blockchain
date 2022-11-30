@@ -38,14 +38,14 @@ class Script:
         return result
 
     def serialize(self) -> bytes:
-        return VarInt(len(self.cmds)).value + self.raw_serialize()
+        return VarInt(len(self.cmds)).serialize() + self.raw_serialize()
 
     @classmethod
     def parse(cls, stream: bytes) -> tuple[Self, bytes]:
         length, stream = VarInt.parse(stream)
         cmds = []
         count = 0
-        while count < length.integer:
+        while count < length.get_value():
             cmd_length = int.from_bytes(stream[:1], 'little')
             stream = stream[1:]
             if cmd_length < 0x4c:

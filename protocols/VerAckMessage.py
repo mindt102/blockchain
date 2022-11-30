@@ -1,3 +1,6 @@
+from network import NetworkAddress
+
+
 class VerAckMessage:
     """
     This class re
@@ -16,8 +19,8 @@ class VerAckMessage:
         return cls()
 
     @classmethod
-    def handler(cls, node, host, payload):
-        node.peers[host].received_verack()
+    def handler(cls, network, host, payload):
+        network.get_peer(host).received_verack()
 
     def __repr__(self):
         return f"VerAckMessage()"

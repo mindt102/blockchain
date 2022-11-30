@@ -1,4 +1,7 @@
 class InvItem:
+    MSG_TX = 1
+    MSG_BLOCK = 2
+
     def __init__(self, type: int, hash: bytes) -> None:
         self.__type = type
         self.__hash = hash

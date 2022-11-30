@@ -19,7 +19,7 @@ class GetDataMessage:
     def parse(cls, stream: bytes) -> tuple[Self, bytes]:
         count, stream = VarInt.parse(stream)
         items = []
-        for _ in range(count.integer):
+        for _ in range(count.__value):
             item, stream = InvItem.parse(stream)
             items.append(item)
         return cls(items), stream

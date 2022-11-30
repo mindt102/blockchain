@@ -28,8 +28,8 @@ class Role(threading.Thread):
         return wrapper
 
     @_rpc  # type: ignore
-    def test(self):
-        self.logger.debug('test')
+    def test(self, message: str = "test"):
+        self.logger.debug(message)
 
     def get_wallet(self):
         return self.__roles.get_wallet()

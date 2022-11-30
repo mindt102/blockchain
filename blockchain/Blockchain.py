@@ -13,6 +13,8 @@ class Blockchain(Role):
         self.__bits = config["initial_bits"]
         self.__genesis_block_path = config["genesis_block_path"]
         self.__genesis_block = self.__init_genesis_block()
+
+        self.__blocks = list()  # TODO: remove this
         super().__init__(blockchain=self)
 
     def run(self) -> None:
@@ -39,11 +41,11 @@ class Blockchain(Role):
         return self.__genesis_block_path
 
     def get_latest_block(self) -> Block:
-        #TODO: IMPLEMENT
+        # TODO: IMPLEMENT
         return self.get_genesis_block()
 
     def get_block_by_hash(self, hash: bytes) -> Block:
-        #TODO: IMPLEMENT
+        # TODO: IMPLEMENT
         return None
 
     def __init_genesis_block(self) -> Block:
@@ -56,19 +58,21 @@ class Blockchain(Role):
         return self.__validate_block(block)
 
     def __validate_block(self, block: Block) -> bool:
-        #TODO: IMPLEMENT
+        # TODO: IMPLEMENT
         return True
 
     @Role._rpc
-    def receive_new_block(self, block: Block) -> None:
-        # TODO: Drop if block already exists
-
+    def receive_new_block(self, block: Block, sender: str) -> None:
+        # TODO: Drop if already have the block
+        if block.get_header().get_hash() in self.__blocks:
+            return
         if not self.__validate_block(block):
             return
         self.__add_block(block)
         self.get_miner().receive_new_block()
-        # self.get_network().broadcast_new_block(block)
+        self.get_network().broadcast_new_block(block, excludes=[sender])
 
     def __add_block(self, block: Block) -> None:
-        #TODO: IMPLEMENT
+        # TODO: IMPLEMENT
+        self.__blocks.append(block.get_header().get_hash())
         pass

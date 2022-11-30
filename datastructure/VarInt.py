@@ -3,17 +3,17 @@ from typing import Self
 
 class VarInt:
     def __init__(self, integer: int):
-        self.integer = integer
+        self.__value = integer
 
-        if integer < 0xfd:
-            self.value = bytes([integer])
-        elif integer < 0xffff:
-            self.value = b'\xfd' + integer.to_bytes(2, 'little')
-        elif integer < 0xffffffff:
-            self.value = b'\xfe' + integer.to_bytes(4, 'little')
+    def serialize(self) -> bytes:
+        if self.__value < 0xfd:
+            return bytes([self.__value])
+        elif self.__value < 0xffff:
+            return b'\xfd' + self.__value.to_bytes(2, 'little')
+        elif self.__value < 0xffffffff:
+            return b'\xfe' + self.__value.to_bytes(4, 'little')
         else:
-            self.value = b'\xff' + integer.to_bytes(8, 'little')
-        self.size = len(self.value)
+            return b'\xff' + self.__value.to_bytes(8, 'little')
 
     @classmethod
     def parse(cls, stream: bytes) -> tuple[Self, bytes]:
@@ -27,4 +27,7 @@ class VarInt:
             return cls(int.from_bytes(stream[1:9], 'little')), stream[9:]
 
     def __repr__(self):
-        return f'VarInt({self.integer}, {self.value})'
+        return f'VarInt({self.__value})'
+
+    def get_value(self) -> int:
+        return self.__value

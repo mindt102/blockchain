@@ -1,2 +1,0 @@
-MSG_TX = 1
-MSG_BLOCK = 2

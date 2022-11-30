@@ -33,4 +33,4 @@ class BlockMessage():
         blockmsg, _ = cls.parse(payload)
         block = blockmsg.get_block()
         blockchain = network.get_blockchain()
-        blockchain.receive_new_block(block)
+        blockchain.receive_new_block(block, sender=host)

@@ -2,7 +2,6 @@ import utils
 from datastructure import VarInt
 from protocols.GetDataMessage import GetDataMessage
 from protocols.InvItem import InvItem
-from protocols.const import *
 
 
 class InvMessage:
@@ -20,7 +19,7 @@ class InvMessage:
     def parse(cls, stream: bytes) -> tuple['InvMessage', bytes]:
         count, stream = VarInt.parse(stream)
         items = []
-        for _ in range(count.integer):
+        for _ in range(count.__value):
             item, stream = InvItem.parse(stream)
             items.append(item)
         return cls(items), stream
@@ -43,7 +42,7 @@ class InvMessage:
         miner = network.get_miner()
         blockchain = network.get_blockchain()
         for item in inv.get_items():
-            if item.get_type() == MSG_TX:  # Transaction
+            if item.get_type() == InvItem.MSG_TX:  # Transaction
                 # Check if transaction is in mempool or in blockchain
                 tx = miner.get_tx_by_hash(
                     item.get_hash()) or blockchain.get_tx_by_hash(item.get_hash())
@@ -51,7 +50,7 @@ class InvMessage:
                     continue
 
                 filtered_items.append(item)
-            elif item.get_type() == MSG_BLOCK:  # Block
+            elif item.get_type() == InvItem.MSG_BLOCK:  # Block
                 # Check if blockchain already has the block
                 block = blockchain.get_block_by_hash(item.get_hash())
                 if block:

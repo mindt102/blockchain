@@ -1,4 +1,4 @@
-from typing import Self
+
 
 from blockchain.TxIn import TxIn
 from blockchain.TxOut import TxOut
@@ -21,7 +21,7 @@ class Transaction:
         return len(self.inputs).to_bytes(4, 'little') + inputs_bytes + len(self.outputs).to_bytes(4, 'little') + outputs_bytes
 
     @classmethod
-    def parse(cls, stream: bytes) -> tuple[Self, bytes]:
+    def parse(cls, stream: bytes) -> tuple['Transaction', bytes]:
         num_inputs = int.from_bytes(stream[:4], 'little')
         stream = stream[4:]
         inputs = []

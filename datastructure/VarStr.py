@@ -1,5 +1,4 @@
 from datastructure.VarInt import VarInt
-from typing import Self
 
 
 class VarStr:
@@ -10,7 +9,7 @@ class VarStr:
         # self.size = len(self.value)
 
     @classmethod
-    def parse(cls, stream: bytes) -> Self:
+    def parse(cls, stream: bytes) -> 'VarStr':
         length, stream = VarInt.parse(stream)
         return cls(stream[:length.get_value()].decode('utf-8')), stream[length.get_value():]
 

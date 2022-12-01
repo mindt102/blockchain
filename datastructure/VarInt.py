@@ -1,4 +1,3 @@
-from typing import Self
 
 
 class VarInt:
@@ -16,7 +15,7 @@ class VarInt:
             return b'\xff' + self.__value.to_bytes(8, 'little')
 
     @classmethod
-    def parse(cls, stream: bytes) -> tuple[Self, bytes]:
+    def parse(cls, stream: bytes) -> tuple['VarInt', bytes]:
         if stream[0] < 0xfd:
             return cls(stream[0]), stream[1:]
         elif stream[0] == 0xfd:

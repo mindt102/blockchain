@@ -1,4 +1,4 @@
-from typing import Self
+
 import utils
 from datastructure import VarInt
 from protocols.InvItem import InvItem
@@ -16,7 +16,7 @@ class GetDataMessage:
         return self.__count.value + b''.join([item.serialize() for item in self.__items])
 
     @classmethod
-    def parse(cls, stream: bytes) -> tuple[Self, bytes]:
+    def parse(cls, stream: bytes) -> tuple['GetDataMessage', bytes]:
         count, stream = VarInt.parse(stream)
         items = []
         for _ in range(count.__value):

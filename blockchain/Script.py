@@ -1,4 +1,4 @@
-from typing import Self
+
 from datastructure import VarInt
 
 
@@ -10,11 +10,11 @@ class Script:
         return Script(self.cmds + other.cmds)
 
     @classmethod
-    def get_lock(cls, addr: str) -> Self:
+    def get_lock(cls, addr: str) -> 'Script':
         return cls([b'\x76', b'\xa9', addr.encode(), b'\x88', b'\xac'])
 
     @ classmethod
-    def get_unlock(cls, privkey: bytes) -> Self:
+    def get_unlock(cls, privkey: bytes) -> 'Script':
         # TODO: Implement
         return cls([privkey])
 
@@ -41,7 +41,7 @@ class Script:
         return VarInt(len(self.cmds)).serialize() + self.raw_serialize()
 
     @classmethod
-    def parse(cls, stream: bytes) -> tuple[Self, bytes]:
+    def parse(cls, stream: bytes) -> tuple['Script', bytes]:
         length, stream = VarInt.parse(stream)
         cmds = []
         count = 0

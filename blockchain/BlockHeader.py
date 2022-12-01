@@ -1,6 +1,6 @@
 import random
 import time
-from typing import Self
+
 
 from utils import hash256, bits_to_target
 
@@ -51,7 +51,7 @@ class BlockHeader:
         return self.__prev_block_hash + self.__merkle_root + self.__timestamp.to_bytes(4, 'little') + self.get_bits().to_bytes(4, 'little') + self.__nonce.to_bytes(4, 'little')
 
     @classmethod
-    def parse(cls, stream: bytes) -> tuple[Self, bytes]:
+    def parse(cls, stream: bytes) -> tuple['BlockHeader', bytes]:
         prev_block_hash = stream[:32]
         stream = stream[32:]
         merkle_root = stream[:32]

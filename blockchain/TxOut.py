@@ -1,4 +1,4 @@
-from typing import Self
+
 from blockchain.Script import Script
 
 
@@ -17,7 +17,7 @@ class TxOut:
 )'''
 
     @classmethod
-    def parse(cls, stream: bytes) -> tuple[Self, bytes]:
+    def parse(cls, stream: bytes) -> tuple['TxOut', bytes]:
         amount = int.from_bytes(stream[:8], 'little')
         stream = stream[8:]
         locking_script, stream = Script.parse(stream)

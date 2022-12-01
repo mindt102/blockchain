@@ -1,4 +1,4 @@
-from typing import Self
+
 from blockchain.Script import Script
 
 
@@ -19,7 +19,7 @@ class TxIn:
 )'''
 
     @classmethod
-    def parse(cls, stream: bytes) -> tuple[Self, bytes]:
+    def parse(cls, stream: bytes) -> tuple['TxIn', bytes]:
         prev_tx = stream[:32]
         stream = stream[32:]
         output_index = int.from_bytes(stream[:4], 'little')

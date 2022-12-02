@@ -1,24 +1,38 @@
-
+from ellipticcurve.ecdsa import Ecdsa
+from blockchain import Script
 
 from blockchain.TxIn import TxIn
 from blockchain.TxOut import TxOut
+from utils import hash256, encode_base58
 
 
 class Transaction:
     def __init__(self, inputs: list[TxIn] = [], outputs: list[TxOut] = []) -> None:
-        self.inputs = inputs
-        self.outputs = outputs
+        self.__inputs = inputs
+        self.__outputs = outputs
 
     def __repr__(self) -> str:
         return f'''Transaction(
-    inputs={self.inputs}, 
-    outputs={self.outputs}
+    inputs={self.__inputs}, 
+    outputs={self.__outputs}
 )'''
 
+    def sign(self, priv_key) -> None:
+        empty_inputs = [txin.get_empty_copy() for txin in self.__inputs]
+        empty_tx = Transaction(empty_inputs, self.__outputs)
+        signature = Ecdsa.sign(encode_base58(
+            hash256(empty_tx.serialize())), priv_key)
+        return signature.toDer()
+
+    def set_unlocking_script(self, unlocking_script: Script) -> None:
+        for txin in self.__inputs:
+            txin.set_unlocking_script(unlocking_script)
+
     def serialize(self) -> bytes:
-        inputs_bytes = b''.join([txin.serialize() for txin in self.inputs])
-        outputs_bytes = b''.join([txout.serialize() for txout in self.outputs])
-        return len(self.inputs).to_bytes(4, 'little') + inputs_bytes + len(self.outputs).to_bytes(4, 'little') + outputs_bytes
+        inputs_bytes = b''.join([txin.serialize() for txin in self.__inputs])
+        outputs_bytes = b''.join([txout.serialize()
+                                 for txout in self.__outputs])
+        return len(self.__inputs).to_bytes(4, 'little') + inputs_bytes + len(self.__outputs).to_bytes(4, 'little') + outputs_bytes
 
     @classmethod
     def parse(cls, stream: bytes) -> tuple['Transaction', bytes]:
@@ -37,3 +51,20 @@ class Transaction:
             outputs.append(txout)
 
         return cls(inputs, outputs), stream
+
+    def get_hash(self) -> bytes:
+        return hash256(self.serialize())
+
+    def get_outputs(self) -> list[TxOut]:
+        return self.__outputs
+
+    def get_inputs(self) -> list[TxIn]:
+        return self.__inputs
+
+    def get_empty_copy(self) -> 'Transaction':
+        return Transaction([txin.get_empty_copy() for txin in self.__inputs], self.__outputs)
+
+    def get_signing_data(self) -> bytes:
+        empty_tx = self.get_empty_copy()
+        return encode_base58(
+            hash256(empty_tx.serialize()))

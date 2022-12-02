@@ -1,6 +1,10 @@
 import os
-from Role import Role
+
+from ellipticcurve.ecdsa import Ecdsa
 from ellipticcurve.privateKey import PrivateKey
+
+from blockchain import Blockchain, Script, Transaction, TxIn, TxOut
+from Role import Role
 from utils import encode_base58check, hash160
 
 
@@ -33,10 +37,9 @@ class Wallet(Role):
         '''
         Generate address from public key
         '''
-        version = b'\x00'
         pubkey = self.__pubkey.toCompressed().encode()
         pubkeyhash = hash160(pubkey)
-        self.__addr = encode_base58check(version + pubkeyhash)
+        self.__addr = encode_base58check(pubkeyhash)
 
     def get_privkey(self):
         return self.__privkey
@@ -47,6 +50,43 @@ class Wallet(Role):
     def get_addr(self):
         return self.__addr
 
+    def create_transaction(self, to_addr: str, amount: int):
+        '''Create a transaction to send coins to another address'''
+        # TODO: IMPLEMENT @Trang
+        blockchain: Blockchain = self.get_blockchain()
+        utxo_sets = blockchain.get_UTXO_set()
+        selected_utxo = self.select_utxo(amount, utxo_sets)
+        inputs = []
+        total_input = 0
+        for key, utxo in selected_utxo.items():
+            prev_hash, index = key
+            tx_in = TxIn(prev_hash, index)
+            inputs.append(tx_in)
+            total_input += utxo.get_amount()
+        change = total_input - amount
+        assert change >= 0
+        change_output = TxOut(change, addr=self.get_addr())
+        spending_output = TxOut(amount, addr=to_addr)
+        outputs = [change_output, spending_output]
+
+        tx = Transaction(inputs, outputs)
+        self.sign_transaction(tx)
+        return tx
+
     @classmethod
     def generate_privkey(cls):
         return PrivateKey()
+
+    def sign_transaction(self, tx: Transaction):
+        '''Sign a transaction'''
+        signature = Ecdsa.sign(tx.get_signing_data(),
+                               self.get_privkey()).toDer()
+        pubkey = self.get_pubkey().toCompressed().encode()
+        unlocking_script = Script.get_unlock(signature, pubkey)
+        tx.set_unlocking_script(unlocking_script)
+
+    def select_utxo(self, amount: int, utxo_set: list) -> list:
+        '''Select UTXO to spend'''
+        # TODO: IMPLEMENT @Trang
+        selected_utxo = utxo_set
+        return selected_utxo

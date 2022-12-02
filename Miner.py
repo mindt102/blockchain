@@ -1,8 +1,8 @@
 import queue
-from Role import Role
-from blockchain import Block, Script, Transaction, TxIn, TxOut
-from utils import hash256
+
 import utils
+from blockchain import Block, Transaction, TxOut
+from Role import Role
 
 
 class Miner(Role):
@@ -41,7 +41,6 @@ class Miner(Role):
             if candidate_header.check_hash():
                 self.__new_block_found = True
                 self.logger.info('New block found')
-                # print(self.__candidate_block)
                 self.get_network().broadcast_new_block(self.__candidate_block)
                 return True
             else:
@@ -65,15 +64,13 @@ class Miner(Role):
     def create_coinbase_tx(self) -> Transaction:
         wallet = self.get_wallet()
         addr = wallet.get_addr()
-        priv_key = wallet.get_privkey().toDer()
 
         amount = self.get_blockchain().get_reward()
 
-        txin = TxIn(b'\x00'*32, 0xffffffff,
-                    unlocking_script=Script.get_unlock(priv_key))
-        txout = TxOut(amount, Script.get_lock(addr))
+        txout = TxOut(amount, addr=addr)
 
-        return Transaction([txin], [txout])
+        tx = Transaction([], [txout])
+        return tx
 
     def __get_candidate_txs(self) -> list[Transaction]:
         mempool_txs = list(self.__mempool.values())
@@ -81,8 +78,9 @@ class Miner(Role):
         self.__mempool.clear()
         return [coinbase_tx] + mempool_txs
 
-    @Role._rpc  # type: ignore
+    @ Role._rpc  # type: ignore
     def get_tx_by_hash(self, tx_hash: bytes) -> Transaction:
+        '''Get transaction by hash from mempool'''
         # TODO: IMPLEMENT
         return None
 

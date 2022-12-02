@@ -1,8 +1,12 @@
 
 from datastructure import VarInt
+from blockchain.operation import *
+import utils
 
 
 class Script:
+    __logger = utils.get_logger(__name__)
+
     def __init__(self, cmds: list[bytes] = []) -> None:
         self.cmds = cmds
 
@@ -11,15 +15,42 @@ class Script:
 
     @classmethod
     def get_lock(cls, addr: str) -> 'Script':
-        return cls([b'\x76', b'\xa9', addr.encode(), b'\x88', b'\xac'])
+        return cls([b'\x76', b'\xa9', utils.decode_base58check(addr), b'\x88', b'\xac'])
 
     @ classmethod
-    def get_unlock(cls, privkey: bytes) -> 'Script':
-        # TODO: Implement
-        return cls([privkey])
+    def get_unlock(cls, signature: bytes, pubkey: bytes) -> 'Script':
+        return cls([signature, pubkey])
 
-    def validate(self) -> bool:
-        # TODO: Validate a script
+    def evaluate(self, z) -> bool:
+        # TODO: Validate a script @NHM
+        cmds = self.cmds[:]
+        stack = []
+        alt_stack = []
+        while cmds:
+            cmd = cmds.pop(0)
+            if len(cmd) == 1 and cmd > b'\x4d':
+                op = OP_CODE_FUNCTIONS[cmd]
+                if cmd in (0x63, 0x64):
+                    if not op(stack, cmds):
+                        self.__logger.warning("OP_IF/OP_NOTIF failed")
+                        return False
+                elif cmd in (0x6b, 0x6c):
+                    if not op(stack, alt_stack, cmds):
+                        self.__logger.warning(
+                            "OP_TOALTSTACK/OP_FROMALTSTACK failed")
+                        return False
+                elif cmd in (0xac, 0xad, 0xae, 0xaf):
+                    if not op(stack, z):
+                        self.__logger.warning(
+                            "OP_CHECKSIG/OP_CHECKSIGVERIFY/OP_CHECKMULTISIG/OP_CHECKMULTISIGVERIFY failed")
+                        return False
+                else:
+                    if not op(stack):
+                        self.__logger.warning(f"{op.__name__} failed")
+                        return False
+            else:
+                stack.append(cmd)
+            # self.__logger.debug(f"cmd: {cmd} - stack: {stack}")
         return True
 
     def raw_serialize(self) -> bytes:

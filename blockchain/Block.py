@@ -17,6 +17,9 @@ class Block:
         # TODO: implement
         return hash256(self.__transactions[0].serialize())
 
+    def get_transactions(self) -> list[Transaction]:
+        return self.__transactions
+
     def __set_header(self, header: BlockHeader) -> None:
         self.__header = header
 

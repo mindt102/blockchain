@@ -74,14 +74,14 @@ class Blockchain(Role):
         # TODO: IMPLEMENT @Hung + @Hien
         inputs = tx.get_inputs()
 
+        # Evaluate the locking script of each input
         signing_data = tx.get_signing_data()
-
         for tx_in in inputs:
-            if not self.verify_txin(tx_in, signing_data):
+            if not self.__verify_txin(tx_in, signing_data):
                 return False
         return True
 
-    def verify_txin(self, txin: TxIn, signing_data: str) -> bool:
+    def __verify_txin(self, txin: TxIn, signing_data: str) -> bool:
         '''Verify a transaction input'''
         # If the input transaction is not in the UTXO set, return False
         prev_hash = txin.get_prev_hash()
@@ -135,5 +135,5 @@ class Blockchain(Role):
         if len(addr) == 0:
             return self.__UTXO_set
         else:
-            # TODO: IMPLEMENT
+            # TODO: IMPLEMENT @NHM
             return self.__UTXO_set  # TODO: remove this

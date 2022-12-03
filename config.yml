@@ -4,11 +4,11 @@ blockchain:
   genesis_block_path: genesis_block.dat
 
 miner:
-  logging_rate: 500
+  logging_rate: 100
 
 network:
   max_peers: 10
-  min_peers: 4
+  min_peers: 2
   port: 8333
   peer_managing_rate: 1
   known_nodes:

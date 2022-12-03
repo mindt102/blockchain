@@ -15,7 +15,7 @@ class Blockchain(Role):
         self.__genesis_block_path = config["genesis_block_path"]
         self.__genesis_block = self.__init_genesis_block()
 
-        self.__blocks = list()  # TODO: remove this
+        self.__blocks = dict()  # TODO: remove this
         self.__update_UTXO_set()
         super().__init__(blockchain=self)
 
@@ -46,9 +46,12 @@ class Blockchain(Role):
         # TODO: IMPLEMENT @NHM
         return self.get_genesis_block()
 
-    def get_block_by_hash(self, hash: bytes) -> Block:
+    def get_block_by_hash(self, block_hash: bytes) -> Block:
         # TODO: IMPLEMENT @NHM
-        return None
+        if block_hash in self.__blocks:
+            return self.__blocks[block_hash]
+        else:
+            return None
 
     def __init_genesis_block(self) -> Block:
         with open(self.__genesis_block_path, 'rb') as f:
@@ -63,7 +66,7 @@ class Blockchain(Role):
         # TODO: IMPLEMENT @Cong
         return True
 
-    def get_transaction_by_hash(self, hash: bytes) -> Transaction:
+    def get_transaction_by_hash(self, tx_hash: bytes) -> Transaction:
         '''Query a transaction by its hash'''
         # TODO: IMPLEMENT @NHM
 
@@ -107,8 +110,8 @@ class Blockchain(Role):
 
     @Role._rpc
     def receive_new_block(self, block: Block, sender: str) -> None:
-        block = self.get_block_by_hash(block.get_header().get_hash())
-        if block:
+        existing_block = self.get_block_by_hash(block.get_header().get_hash())
+        if existing_block:
             return
         if not self.__validate_block(block):
             return
@@ -118,7 +121,7 @@ class Blockchain(Role):
 
     def __add_block(self, block: Block) -> None:
         # TODO: IMPLEMENT @NHM
-        self.__blocks.append(block.get_header().get_hash())
+        self.__blocks[block.get_header().get_hash()] = block
         pass
 
     def __update_UTXO_set(self) -> None:

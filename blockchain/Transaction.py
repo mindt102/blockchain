@@ -58,6 +58,9 @@ class Transaction:
     def get_outputs(self) -> list[TxOut]:
         return self.__outputs
 
+    def get_output_by_index(self, output_index: int) -> list[TxOut]:
+        return self.__outputs[output_index]
+
     def get_inputs(self) -> list[TxIn]:
         return self.__inputs
 

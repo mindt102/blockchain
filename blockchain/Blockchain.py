@@ -1,6 +1,6 @@
 import queue
 
-from blockchain import Block, Transaction, TxIn
+from blockchain import Block, Transaction, TxIn, TxOut
 from Role import Role
 from utils import bits_to_target
 
@@ -129,11 +129,11 @@ class Blockchain(Role):
         # TODO: IMPLEMENT @Cong
         output_index = 0
         tx = self.get_genesis_block().get_transactions()[output_index]
-        self.__UTXO_set = {
-            (tx.get_hash(), output_index): tx.get_outputs()[output_index]
+        self.__UTXO_set: dict[tuple[bytes, int], TxOut] = {
+            (tx.get_hash(), output_index): tx.get_output_by_index(output_index)
         }
 
-    def get_UTXO_set(self, addr=[]) -> dict:
+    def get_UTXO_set(self, addr=[]) -> dict[tuple[bytes, int], TxOut]:
         '''Query unspent transaction outputs based on addresses'''
         if len(addr) == 0:
             return self.__UTXO_set

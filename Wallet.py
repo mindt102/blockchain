@@ -88,5 +88,6 @@ class Wallet(Role):
     def select_utxo(self, amount: int, utxo_set: dict[tuple[bytes, int], TxOut]) -> dict[tuple[bytes, int], TxOut]:
         '''Select UTXO to spend. utxo_set is a dict with key: (prev_hash, output_index) and value: TxOut'''
         # TODO: IMPLEMENT @Trang
+        # ... ht is doing
         selected_utxo = utxo_set
         return selected_utxo

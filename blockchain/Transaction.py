@@ -1,6 +1,6 @@
 from ellipticcurve.ecdsa import Ecdsa
 from blockchain import Script
-
+from blockchain import Blockchain
 from blockchain.TxIn import TxIn
 from blockchain.TxOut import TxOut
 from utils import hash256, encode_base58
@@ -71,3 +71,19 @@ class Transaction:
         empty_tx = self.get_empty_copy()
         return encode_base58(
             hash256(empty_tx.serialize()))
+
+    #Hung & Hien in processing
+
+    def checkspentness_Inputs(self, addr=[]):
+        UTXOs = Blockchain.get_UTXO_set(addr)
+        inputs = self.get_inputs(addr)
+        for _ in inputs:
+            for key, value in UTXOs.items():
+                if _ == value:
+                    return "Valid block"
+            return "Invalid or spent block"
+
+    def check_sumIN_OUT(self, stream: bytes):
+        Txin, Txout, Stream = self.parse(stream)
+        if sum(TxIn) > sum(TxOut): return "Create money"
+        else: return "Overflow Incident" 

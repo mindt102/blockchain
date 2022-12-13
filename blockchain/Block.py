@@ -12,7 +12,7 @@ class Block:
 
     def get_header(self) -> BlockHeader:
         return self.__header
-
+        
     def get_merkle_root(self) -> bytes:
         # TODO: implement
         return hash256(self.__transactions[0].serialize())

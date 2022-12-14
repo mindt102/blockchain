@@ -30,7 +30,7 @@ utxo_set = blockchain.get_UTXO_set()
 for i in range (10):
     utxo_set[(b'random hash', i)] = txout(amount=random.randint(10, 100))
 
-coin_amount = 150
+amount = 150
 
 # Code
 selected_utxo = {}
@@ -39,17 +39,31 @@ sum = 0
 #def fifo_selection(list,amount):
 
 for key in utxo_set.keys():
-    #print(key,'->',utxo_set[key])
+    print(key,'->',utxo_set[key])
     coin = utxo_set[key].get_amount()
-    #print(coin)
-    coin_list.append(coin)
-    for i in range(len(coin_list)):
-        sum += coin_list[i]
-        #...st wronggg :'((
-        if sum < coin_amount:
-            print(sum)
-            selected_utxo.update({key:coin})
-print(coin_list)        
+    
+    selected_utxo[key] = utxo_set[key]
+    sum += coin
+    if sum >= amount:
+        print('Sum is: ',sum)
+        print('Seclected utxos are: ',selected_utxo)
+        break
+
+
+#     coin_list.append(coin)
+#     print(coin_list)
+
+# for i in range(len(coin_list)):
+#     sum += coin_list[i]
+#     print('coin: ',coin_list[i])
+    
+#     if sum < coin_amount:
+#         selected_utxo.update({key:utxo_set[key]})   
+#     else:
+#         selected_utxo.update({key:utxo_set[key]})
+#         break 
+# print("List coin:", coin_list)
+
 # Output
 # return selected_utxo
-print(selected_utxo)
+#print(selected_utxo)

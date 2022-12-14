@@ -58,12 +58,30 @@ class Blockchain(Role):
             block = Block.parse(f.read())[0]
         return block
 
-    @Role._rpc
+    # @Role._rpc
     def validate_block(self, block: Block) -> bool:
         return self.__validate_block(block)
 
     def __validate_block(self, block: Block) -> bool:
         # TODO: IMPLEMENT @Cong
+        if not block.get_header().check_hash():
+            return False
+
+        txs = block.get_transactions()
+        if not txs[0].is_coinbase():
+            return False
+
+        # block_merkle_root = compute_merkle_root(block)
+        block_merkle_root = block.compute_merkle_root()
+        if block_merkle_root != block.get_header().get_merkle_root():
+            return False
+
+        blockchain = self.get_blockchain()
+        for i in range(1, len(txs)):
+            tx = txs[i]
+            if not blockchain.validate_transaction(tx) or tx.is_coinbase():
+                return False
+
         return True
 
     def get_transaction_by_hash(self, tx_hash: bytes) -> Transaction:
@@ -87,13 +105,13 @@ class Blockchain(Role):
     def __verify_txin(self, txin: TxIn, signing_data: str) -> bool:
         '''Verify a transaction input'''
         # If the input transaction is not in the UTXO set, return False
-        prev_hash = txin.get_prev_hash()
+        prev_tx = txin.get_prev_tx()
         output_index = txin.get_output_index()
-        if (prev_hash, output_index) not in self.__UTXO_set:
+        if (prev_tx, output_index) not in self.__UTXO_set:
             return False
 
         # If the previous transaction does not exist, return False
-        prev_tx = self.get_transaction_by_hash(prev_hash)
+        prev_tx = self.get_transaction_by_hash(prev_tx)
         if prev_tx is None:
             return False
 

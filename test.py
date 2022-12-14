@@ -11,11 +11,20 @@ config = yaml.load(open('.\\config.yml'), Loader=yaml.FullLoader)
 blockchain = Blockchain(config=config["blockchain"])
 
 
-def is_coin_base(block):
+def is_coin_base(tx: Transaction):
     # TODO: Check with algorithm
-    tx = block.get_transactions()
-    if len(tx[0].get_inputs()) > 1:
+    inputs = tx.get_inputs()
+    # tx = block.get_transactions()
+    if len(inputs) != 1:
         return False
+    
+    first_input = inputs[0]
+    prev_tx = first_input.get_prev_tx()
+    output_index = first_input.get_output_index()
+
+    if prev_tx != b'\x00' * 32 or output_index != 0xffffffff:
+        return False
+
     return True
 
 
@@ -38,7 +47,8 @@ def validate_block(block: Block):
     if not block.get_header().check_hash():
         return False
 
-    if is_coin_base(block) == False:
+    txs = block.get_transactions()
+    if not is_coin_base(txs[0]):
         return False
 
     # block_merkle_root = compute_merkle_root(block)
@@ -47,7 +57,10 @@ def validate_block(block: Block):
         return False
 
     # TODO: Check other transactions are not coinbase and valid
-
+    for i in range(1, len(txs)):
+        tx = txs[i]
+        if not blockchain.validate_transaction(tx) or is_coin_base(tx):
+            return False
     return True
 
 
@@ -59,6 +72,4 @@ miner = Miner(config=config["miner"])
 # Code
 block_test = blockchain.get_genesis_block()
 print(block_test)
-#print("Check block header: ", CheckBlockHeader(block_test))
-#print("Check coin base: ", is_coin_base(block_test))
-print("Validate block: ", validate_block(block_test))
+print("Validate block: ", blockchain.validate_block(block_test))

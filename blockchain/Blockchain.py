@@ -58,12 +58,30 @@ class Blockchain(Role):
             block = Block.parse(f.read())[0]
         return block
 
-    @Role._rpc
+    # @Role._rpc
     def validate_block(self, block: Block) -> bool:
         return self.__validate_block(block)
 
     def __validate_block(self, block: Block) -> bool:
         # TODO: IMPLEMENT @Cong
+        if not block.get_header().check_hash():
+            return False
+
+        txs = block.get_transactions()
+        if not txs[0].is_coinbase():
+            return False
+
+        # block_merkle_root = compute_merkle_root(block)
+        block_merkle_root = block.compute_merkle_root()
+        if block_merkle_root != block.get_header().get_merkle_root():
+            return False
+
+        blockchain = self.get_blockchain()
+        for i in range(1, len(txs)):
+            tx = txs[i]
+            if not blockchain.validate_transaction(tx) or tx.is_coinbase():
+                return False
+
         return True
 
     def get_transaction_by_hash(self, tx_hash: bytes) -> Transaction:
@@ -75,25 +93,54 @@ class Blockchain(Role):
 
     def validate_transaction(self, tx: Transaction) -> bool:
         # TODO: IMPLEMENT @Hung + @Hien
+        utxo_set = self.get_blockchain().get_UTXO_set()
         inputs = tx.get_inputs()
-
-        # Evaluate the locking script of each input
+        outputs = tx.get_outputs()
         signing_data = tx.get_signing_data()
-        for tx_in in inputs:
-            if not self.__verify_txin(tx_in, signing_data):
+
+        if len(inputs) == 0 or len(outputs) == 0:
+            self.logger.warning(f"Invalid input or output length: {len(inputs)} and {len(outputs)}")
+            return False
+
+        # Calculate total input amount
+        input_sum = 0
+        for txin in inputs:
+            index = txin.get_output_index()
+            prevtx = txin.get_prev_tx()
+            key = (prevtx, index)
+
+            # Evaluate the locking script of each input
+            if not self.__verify_txin(txin, signing_data):
+                self.logger.warning(f"Invalid unlocking script")
                 return False
+
+            # Not an unspent transaction outputs
+            if key not in utxo_set:
+                self.logger.warning(f"Not an UTXO")
+                return False
+            input_sum += utxo_set[key].get_amount()
+        
+        # Calculate total output amount
+        output_sum = 0
+        for txout in outputs:
+            output_sum += txout.get_amount()
+
+        if input_sum < output_sum:
+            self.logger.warning(f"Input sum={input_sum} smaller than output sum={output_sum}")
+            return False
+
         return True
 
     def __verify_txin(self, txin: TxIn, signing_data: str) -> bool:
         '''Verify a transaction input'''
         # If the input transaction is not in the UTXO set, return False
-        prev_hash = txin.get_prev_hash()
+        prev_tx = txin.get_prev_tx()
         output_index = txin.get_output_index()
-        if (prev_hash, output_index) not in self.__UTXO_set:
+        if (prev_tx, output_index) not in self.__UTXO_set:
             return False
 
         # If the previous transaction does not exist, return False
-        prev_tx = self.get_transaction_by_hash(prev_hash)
+        prev_tx = self.get_transaction_by_hash(prev_tx)
         if prev_tx is None:
             return False
 

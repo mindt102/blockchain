@@ -1,7 +1,7 @@
 import queue
 
 import utils
-from blockchain import Block, Transaction, TxOut
+from blockchain import Block, Transaction, TxIn, TxOut
 from Role import Role
 
 
@@ -67,9 +67,10 @@ class Miner(Role):
 
         amount = self.get_blockchain().get_reward()
 
+        txin = TxIn(prev_tx=32*b'\x00', output_index=0xffffffff)
         txout = TxOut(amount, addr=addr)
 
-        tx = Transaction([], [txout])
+        tx = Transaction([txin], [txout])
         return tx
 
     def __get_candidate_txs(self) -> list[Transaction]:

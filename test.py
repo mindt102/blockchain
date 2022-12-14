@@ -5,9 +5,10 @@ from Miner import Miner
 from utils import *
 from Wallet import Wallet
 
+import random
 wallet = Wallet()
 
-config = yaml.load(open('.\\config.yml'), Loader=yaml.FullLoader)
+config = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
 blockchain = Blockchain(config=config["blockchain"])
 
 miner = Miner(config=config["miner"])
@@ -27,45 +28,58 @@ def is_spent(txin: TxIn, utxo_set: dict) -> bool:
     return False
 
 
-def check_output_sum(inputs: list[TxIn], outputs: list[TxOut], utxo_set: dict) -> bool:
-    '''Check if the sum of the inputs is larger than or equal to the sum of the outputs'''
-    #print(inputs)
-    print("-----------------------------------------------------")
-    #print(outputs)
+# def check_output_sum(inputs: list[TxIn], outputs: list[TxOut], utxo_set: dict) -> bool:
+#     '''Check if the sum of the inputs is larger than or equal to the sum of the outputs'''
+#     input_sum = 0
+#     for txin in inputs:
+#         index = txin.get_output_index()
+#         prevtx = txin.get_prev_tx()
+#         key = (index, prevtx)
+#         if key not in utxo_set:
+#             return False
+#         input += utxo_set[key].get_amount()
     
-    TxIn_index = inputs[0].get_output_index()
-    TxIn_prevtx = inputs[0].get_prev_hash()
-    print("input index:", TxIn_index)
-    print(tuple((TxIn_prevtx, TxIn_index)))
-    archive_index_prev = tuple((TxIn_prevtx, TxIn_index))
-    print("----------------------------------------------------")
-    print(utxo_set[archive_index_prev].get_amount())
-    input_sum = utxo_set[archive_index_prev].get_amount()
-    output_sum = outputs[0].get_amount()
-    if (input_sum - output_sum) >= 0:
-        print("Create money")
-        return True
-    else: 
-        print("Overflow Incident") 
+#     output_sum = 0
+#     for txout in outputs:
+#         output_sum += txout.get_amount()
 
+#     return input_sum >= output_sum
 
 def validate_transaction(tx: Transaction) -> bool:
     '''Validate a transaction'''
     utxo_set = blockchain.get_UTXO_set()
     inputs = tx.get_inputs()
     outputs = tx.get_outputs()
+    print("UTXO set: ", utxo_set)
 
     if len(inputs) == 0 or len(outputs) == 0:
         return False
 
-    for tx_in in inputs:
-        if is_spent(tx_in, utxo_set):
-            return False
+    # for tx_in in inputs:
+        # if tx_in.is_coinbase():
+        #     return False
+    
+    # Calculate total input amount
+    input_sum = 0
+    for txin in inputs:
+        index = txin.get_output_index()
+        prevtx = txin.get_prev_tx()
+        key = (prevtx, index)
 
-    if not check_output_sum(inputs, outputs, utxo_set):
+        # Not an unspent transaction outputs
+        if key not in utxo_set:
+            return False
+        input_sum += utxo_set[key].get_amount()
+    
+    # Calculate total output amount
+    output_sum = 0
+    for txout in outputs:
+        output_sum += txout.get_amount()
+
+    if input_sum < output_sum:
         return False
 
     return True
 
-
 print(validate_transaction(tx))
+# print(blockchain.validate_transaction(tx))

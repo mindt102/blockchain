@@ -93,13 +93,42 @@ class Blockchain(Role):
 
     def validate_transaction(self, tx: Transaction) -> bool:
         # TODO: IMPLEMENT @Hung + @Hien
+        utxo_set = self.get_blockchain().get_UTXO_set()
         inputs = tx.get_inputs()
-
-        # Evaluate the locking script of each input
+        outputs = tx.get_outputs()
         signing_data = tx.get_signing_data()
-        for tx_in in inputs:
-            if not self.__verify_txin(tx_in, signing_data):
+
+        if len(inputs) == 0 or len(outputs) == 0:
+            self.logger.warning(f"Invalid input or output length: {len(inputs)} and {len(outputs)}")
+            return False
+
+        # Calculate total input amount
+        input_sum = 0
+        for txin in inputs:
+            index = txin.get_output_index()
+            prevtx = txin.get_prev_tx()
+            key = (prevtx, index)
+
+            # Evaluate the locking script of each input
+            if not self.__verify_txin(txin, signing_data):
+                self.logger.warning(f"Invalid unlocking script")
                 return False
+
+            # Not an unspent transaction outputs
+            if key not in utxo_set:
+                self.logger.warning(f"Not an UTXO")
+                return False
+            input_sum += utxo_set[key].get_amount()
+        
+        # Calculate total output amount
+        output_sum = 0
+        for txout in outputs:
+            output_sum += txout.get_amount()
+
+        if input_sum < output_sum:
+            self.logger.warning(f"Input sum={input_sum} smaller than output sum={output_sum}")
+            return False
+
         return True
 
     def __verify_txin(self, txin: TxIn, signing_data: str) -> bool:

@@ -21,7 +21,7 @@ class BlockHeader:
         return hash256(self.serialize())
 
     def check_hash(self) -> bool:
-        return int.from_bytes(self.get_hash()) < bits_to_target(self.get_bits())
+        return int.from_bytes(self.get_hash(), byteorder='big') < bits_to_target(self.get_bits())
 
     def update_nonce(self) -> None:
         self.__nonce += 1
@@ -37,6 +37,9 @@ class BlockHeader:
 
     def get_prev_block_hash(self) -> bytes:
         return self.__prev_block_hash
+
+    def get_merkle_root(self) -> bytes:
+        return self.__merkle_root
 
     def __repr__(self) -> str:
         return f'''BlockHeader(

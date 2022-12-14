@@ -55,6 +55,9 @@ def validate_transaction(tx: Transaction) -> bool:
     inputs = tx.get_inputs()
     outputs = tx.get_outputs()
 
+    if len(inputs) == 0 or len(outputs) == 0:
+        return False
+
     for tx_in in inputs:
         if is_spent(tx_in, utxo_set):
             return False

@@ -56,7 +56,7 @@ class Wallet(Role):
         blockchain: Blockchain = self.get_blockchain()
         utxo_sets = blockchain.get_UTXO_set()
         selected_utxo = self.select_utxo(amount, utxo_sets)
-        inputs = []
+        inputs: list[TxIn] = []
         total_input = 0
         for key, utxo in selected_utxo.items():
             prev_hash, index = key
@@ -67,7 +67,7 @@ class Wallet(Role):
         assert change >= 0
         change_output = TxOut(change, addr=self.get_addr())
         spending_output = TxOut(amount, addr=to_addr)
-        outputs = [change_output, spending_output]
+        outputs: list[TxOut] = [change_output, spending_output]
 
         tx = Transaction(inputs, outputs)
         self.sign_transaction(tx)
@@ -88,5 +88,14 @@ class Wallet(Role):
     def select_utxo(self, amount: int, utxo_set: dict[tuple[bytes, int], TxOut]) -> dict[tuple[bytes, int], TxOut]:
         '''Select UTXO to spend. utxo_set is a dict with key: (prev_hash, output_index) and value: TxOut'''
         # TODO: IMPLEMENT @Trang
-        selected_utxo = utxo_set
-        return selected_utxo
+        # ... ht is doing
+        total = 0
+        selected_utxo = dict()
+        
+        for key, value in utxo_set.items():
+            coin = value.get_amount()
+            selected_utxo[key] = value
+            total += coin
+            if total >= amount:
+                return selected_utxo
+        raise ValueError(f"Not enough coin. Current balance: {total}")

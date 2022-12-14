@@ -35,3 +35,13 @@ class TxOut:
 
     def get_locking_script(self) -> Script:
         return self.__locking_script
+
+    __tableName = "tx_outputs"
+    __tableCol = ["tx_id", "indexTx", "locking_script"]
+
+    def query(self):
+        # TODO: Fill values
+        values = [
+
+        ]
+        return "INSERT INTO {} () VALUES ()".format(self.__tableName, ", ".join(self.__tableCol), ", ".join(values))

@@ -43,10 +43,10 @@ class BlockHeader:
 
     def __repr__(self) -> str:
         return f'''BlockHeader(
-    prev_block_hash={self.__prev_block_hash.hex()}, 
-    merkle_root={self.__merkle_root.hex()}, 
-    timestamp={self.__timestamp}, 
-    bits={self.__bits}, 
+    prev_block_hash={self.__prev_block_hash.hex()},
+    merkle_root={self.__merkle_root.hex()},
+    timestamp={self.__timestamp},
+    bits={self.__bits},
     nonce={self.__nonce}
 )'''
 
@@ -66,3 +66,18 @@ class BlockHeader:
         nonce = int.from_bytes(stream[:4], 'little')
         stream = stream[4:]
         return cls(prev_block_hash, merkle_root, bits, nonce, timestamp), stream
+
+    __tableName = "block_header"
+    __tableCol = ["prev_hash", "hash", "merkel_root",
+                  "timestamp", "nonce", "bits", "height"]
+
+    def query(self):
+        # TODO: What is height?
+        values = [self.__prev_block_hash.hex(),
+                  self.get_hash().hex(),
+                  self.__merkle_root.hex(),
+                  self.__timestamp,
+                  self.__nonce,
+                  self.__bits,
+                  ]
+        return "INSERT INTO {} () VALUES ()".format(self.__tableName, ", ".join(self.__tableCol), ", ".join(values))

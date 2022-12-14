@@ -1,0 +1,125 @@
+[
+    {
+        "tableName": "block_headers",
+        "tableCol": [
+            {
+                "name": "id",
+                "type": "integer",
+                "null": false,
+                "primaryKey": true
+            },
+            {
+                "name": "prev_hash",
+                "type": "BLOB",
+                "length": 32,
+                "null": false
+            },
+            {
+                "name": "hash",
+                "type": "BLOB",
+                "length": 32,
+                "null": false
+            },
+            {
+                "name": "merkel_root",
+                "type": "BLOB",
+                "length": 32,
+                "null": false
+            },
+            {
+                "name": "timestamp",
+                "type": "integer",
+                "null": false
+            },
+            {
+                "name": "nonce",
+                "type": "integer",
+                "null": false
+            },
+            {
+                "name": "bits",
+                "type": "integer",
+                "null": false
+            },
+            {
+                "name": "height",
+                "type": "integer",
+                "null": false
+            }
+        ]
+    },
+    {
+        "tableName": "transactions",
+        "tableCol": [
+            {
+                "name": "id",
+                "type": "integer",
+                "null": false,
+                "primaryKey": true,
+                "AI": true
+            },
+            {
+                "name": "block_header_id",
+                "type": "integer",
+                "null": false,
+                "foreignKey": true,
+                "refTable": "block_headers",
+                "refCol": "id"
+            },
+            {
+                "name": "tx_hash",
+                "type": "BLOB",
+                "length": 32,
+                "null": false
+            }
+        ]
+    },
+    {
+        "tableName": "tx_outputs",
+        "tableCol": [
+            {
+                "name": "id",
+                "type": "integer",
+                "null": false,
+                "primaryKey": true,
+                "AI": true
+            },
+            {
+                "name": "tx_id",
+                "type": "integer",
+                "null": false,
+                "foreignKey": true,
+                "refTable": "transactions",
+                "refCol": "id"
+            },
+            {
+                "name": "indexTx",
+                "type": "integer",
+                "null": false
+            },
+            {
+                "name": "locking_script",
+                "type": "BLOB",
+                "null": false
+            }
+        ]
+    },
+    {
+        "tableName": "tx_inputs",
+        "tableCol": [
+            {
+                "name": "tx_output_id",
+                "type": "integer",
+                "null": false,
+                "foreignKey": true,
+                "refTable": "tx_outputs",
+                "refCol": "id"
+            },
+            {
+                "name": "unlocking_script",
+                "type": "BLOB",
+                "null": false
+            }
+        ]
+    }
+]

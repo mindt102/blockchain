@@ -41,3 +41,13 @@ class TxIn:
 
     def get_unlocking_script(self) -> Script:
         return self.__unlocking_script
+
+    __tableName = "tx_inputs"
+    __tableCol = ["tx_output", "unlocking_script"]
+
+    def query(self):
+        # TODO: Fill values
+        values = [
+
+        ]
+        return "INSERT INTO {} () VALUES ()".format(self.__tableName, ", ".join(self.__tableCol), ", ".join(values))

@@ -80,7 +80,7 @@ class Transaction:
         # tx = block.get_transactions()
         if len(inputs) != 1:
             return False
-        
+
         first_input = inputs[0]
         prev_tx = first_input.get_prev_tx()
         output_index = first_input.get_output_index()
@@ -89,3 +89,13 @@ class Transaction:
             return False
 
         return True
+
+    __tableName = "transactions"
+    __tableCol = ["block_header_id", "tx_hash"]
+
+    def query(self):
+        values = [
+            "",  # TODO: block header id
+            self.get_hash()
+        ]
+        return "INSERT INTO {} () VALUES ()".format(self.__tableName, ", ".join(self.__tableCol), ", ".join(values))

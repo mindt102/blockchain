@@ -19,13 +19,34 @@ def is_spent(txin: TxIn, utxo_set: dict) -> bool:
     '''Check if a TxIn is spent'''
     print("TxIn: ", txin)
     print("UTXO: ", utxo_set)
+    for key, value in utxo_set.items():
+        if txin == value:
+            print("----------------------------------------------------------------")
+            print("not spent")
+            return True
     return False
 
 
-def check_output_sum(inputs: list[TxIn], outputs: TxOut) -> bool:
+def check_output_sum(inputs: list[TxIn], outputs: list[TxOut], utxo_set: dict) -> bool:
     '''Check if the sum of the inputs is larger than or equal to the sum of the outputs'''
-    # print(outputs)
-    return True
+    #print(inputs)
+    print("-----------------------------------------------------")
+    #print(outputs)
+    
+    TxIn_index = inputs[0].get_output_index()
+    TxIn_prevtx = inputs[0].get_prev_hash()
+    print("input index:", TxIn_index)
+    print(tuple((TxIn_prevtx, TxIn_index)))
+    archive_index_prev = tuple((TxIn_prevtx, TxIn_index))
+    print("----------------------------------------------------")
+    print(utxo_set[archive_index_prev].get_amount())
+    input_sum = utxo_set[archive_index_prev].get_amount()
+    output_sum = outputs[0].get_amount()
+    if (input_sum - output_sum) >= 0:
+        print("Create money")
+        return True
+    else: 
+        print("Overflow Incident") 
 
 
 def validate_transaction(tx: Transaction) -> bool:
@@ -38,7 +59,7 @@ def validate_transaction(tx: Transaction) -> bool:
         if is_spent(tx_in, utxo_set):
             return False
 
-    if not check_output_sum(inputs, outputs):
+    if not check_output_sum(inputs, outputs, utxo_set):
         return False
 
     return True

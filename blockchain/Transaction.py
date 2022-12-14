@@ -1,6 +1,5 @@
 from ellipticcurve.ecdsa import Ecdsa
 from blockchain import Script
-# from blockchain import Blockchain
 from blockchain.TxIn import TxIn
 from blockchain.TxOut import TxOut
 from utils import hash256, encode_base58

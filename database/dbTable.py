@@ -1,4 +1,4 @@
-from database.db import db
+from database.dbController import db
 from database.generateQuery import GenerateQuery
 import os
 import json

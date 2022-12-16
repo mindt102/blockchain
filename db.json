@@ -101,6 +101,11 @@
                 "name": "locking_script",
                 "type": "BLOB",
                 "null": false
+            },
+            {
+                "name": "addr",
+                "type": "TEXT",
+                "null": false
             }
         ]
     },

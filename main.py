@@ -4,31 +4,37 @@ import yaml
 from database.dbTable import createDb
 
 import utils
-from blockchain import Blockchain
+# from blockchain import Blockchain
 from Miner import Miner
 from network import Network
 from Wallet import Wallet
 
+from blockchain import Blockchain, BlockHeader
+
 if __name__ == '__main__':
-    createDb()
-    # logger = utils.get_logger(__name__)
-    # try:
-    #     config = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
 
-    #     network = Network(config=config["network"])
-    #     network.start()
+    logger = utils.get_logger(__name__)
+    try:
+        config = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
+        createDb(config['db']['name'], config['db']
+                 ['sample'], config['db']['debug'])
 
-    #     blockchain = Blockchain(config=config["blockchain"])
+        # network = Network(config=config["network"])
+        # network.start()
 
-    #     wallet = Wallet()
+        blockchain = Blockchain(config=config["blockchain"])
+        block = blockchain.get_genesis_block()
+        block.insert()
+        # print(.get_header().insert())
+        # wallet = Wallet()
 
-    #     miner = Miner(config=config["miner"])
+        # miner = Miner(config=config["miner"])
 
-    #     blockchain.start()
-    #     miner.start()
+        # blockchain.start()
+        # miner.start()
 
-    # except:
-    #     logger.exception("Could not start node. Please check config.yml")
-    #     raise
+    except:
+        logger.exception("Could not start node. Please check config.yml")
+        raise
 
 # https://cs.berry.edu/~nhamid/p2p/index.html

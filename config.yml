@@ -3,6 +3,11 @@ blockchain:
   initial_bits: 0x1f0fffff # 0x1d00ffff
   genesis_block_path: genesis_block.dat
 
+db:
+  name: bc.db
+  sample: db.json
+  debug: true
+
 miner:
   logging_rate: 100
 

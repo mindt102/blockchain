@@ -1,8 +1,9 @@
 from ellipticcurve.ecdsa import Ecdsa
 from blockchain import Script
-from blockchain.TxIn import TxIn
 from blockchain.TxOut import TxOut
+from database.dbController import DatabaseController
 from utils import hash256, encode_base58
+from blockchain.TxIn import TxIn
 
 
 class Transaction:
@@ -12,7 +13,7 @@ class Transaction:
 
     def __repr__(self) -> str:
         return f'''Transaction(
-    inputs={self.__inputs}, 
+    inputs={self.__inputs},
     outputs={self.__outputs}
 )'''
 
@@ -93,9 +94,12 @@ class Transaction:
     __tableName = "transactions"
     __tableCol = ["block_header_id", "tx_hash"]
 
-    def query(self):
-        values = [
-            "",  # TODO: block header id
-            self.get_hash()
-        ]
-        return "INSERT INTO {} () VALUES ()".format(self.__tableName, ", ".join(self.__tableCol), ", ".join(values))
+    def insert(self, blockHeaderId: int):
+        values = (blockHeaderId, self.get_hash())
+        __db = DatabaseController()
+        txId = __db.insert(self.__tableName, self.__tableCol, values)
+        for idx, txOut in enumerate(self.get_outputs()):
+            txOut.insert(txId, idx)
+        for idx, txIn in enumerate(self.get_inputs()):
+            if not self.is_coinbase():
+                txIn.insert()

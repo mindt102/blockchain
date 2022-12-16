@@ -1,5 +1,8 @@
 
 from blockchain.Script import Script
+from blockchain.utils import getTxByHash
+from database.dbController import DatabaseController
+from blockchain.TxOut import TxOut
 
 
 class TxIn:
@@ -43,11 +46,15 @@ class TxIn:
         return self.__unlocking_script
 
     __tableName = "tx_inputs"
-    __tableCol = ["tx_output", "unlocking_script"]
+    __tableCol = ["tx_output_id", "unlocking_script"]
 
-    def query(self):
-        # TODO: Fill values
-        values = [
-
-        ]
-        return "INSERT INTO {} () VALUES ()".format(self.__tableName, ", ".join(self.__tableCol), ", ".join(values))
+    def insert(self):
+        __db = DatabaseController()
+        txId = getTxByHash(self.__prev_tx)
+        if not txId:
+            print("Transaction not found")
+        txOut = TxOut.select(txId, self.__output_index)
+        if not txOut:
+            print("Transaction output not found")
+        values = (txOut, self.__unlocking_script.serialize())
+        return __db.insert(self.__tableName, self.__tableCol, values)

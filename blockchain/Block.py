@@ -42,3 +42,10 @@ class Block:
         block = cls(txs, header.get_prev_block_hash(), header.get_bits())
         block.__set_header(header)
         return block, stream
+
+    def insert(self):
+        blockHeaderId = self.get_header().insert()
+        for tx in self.get_transactions():
+            tx.insert(blockHeaderId)
+
+        

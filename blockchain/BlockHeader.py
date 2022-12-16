@@ -1,5 +1,6 @@
 import random
 import time
+from database.dbController import DatabaseController
 
 
 from utils import hash256, bits_to_target
@@ -67,17 +68,21 @@ class BlockHeader:
         stream = stream[4:]
         return cls(prev_block_hash, merkle_root, bits, nonce, timestamp), stream
 
-    __tableName = "block_header"
+    __tableName = "block_headers"
     __tableCol = ["prev_hash", "hash", "merkel_root",
                   "timestamp", "nonce", "bits", "height"]
 
-    def query(self):
-        # TODO: What is height?
-        values = [self.__prev_block_hash.hex(),
-                  self.get_hash().hex(),
-                  self.__merkle_root.hex(),
-                  self.__timestamp,
-                  self.__nonce,
-                  self.__bits,
-                  ]
-        return "INSERT INTO {} () VALUES ()".format(self.__tableName, ", ".join(self.__tableCol), ", ".join(values))
+    @classmethod
+    def getMaxHeight(cls):
+        __db = DatabaseController()
+        res = __db.fetchOne(
+            "SELECT MAX(height) FROM {}".format(cls.__tableName))
+        if res[0]:
+            return res[0]
+        return 0
+
+    def insert(self):
+        values = (self.__prev_block_hash, self.get_hash(),
+                  self.__merkle_root, self.__timestamp, self.__nonce, self.__bits, self.getMaxHeight()+1)
+        __db = DatabaseController()
+        return __db.insert(self.__tableName, self.__tableCol, values)

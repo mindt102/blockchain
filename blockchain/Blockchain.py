@@ -2,11 +2,12 @@ import queue
 
 from blockchain import Block, Transaction, TxIn, TxOut
 from Role import Role
-from utils import bits_to_target
+from utils import bits_to_target, get_logger
 
 
 class Blockchain(Role):
     '''Provide blockchain functionality'''
+    logger = get_logger(__name__)
 
     def __init__(self, config: dict) -> None:
         self.config = config
@@ -63,23 +64,29 @@ class Blockchain(Role):
         return self.__validate_block(block)
 
     def __validate_block(self, block: Block) -> bool:
-        # TODO: IMPLEMENT @Cong
         if not block.get_header().check_hash():
+            self.logger.debug("Invalid header hash")
             return False
 
         txs = block.get_transactions()
         if not txs[0].is_coinbase():
+            self.logger.debug("First tx is not coinbase")
             return False
 
         # block_merkle_root = compute_merkle_root(block)
         block_merkle_root = block.compute_merkle_root()
         if block_merkle_root != block.get_header().get_merkle_root():
+            self.logger.debug("Invalid merkel root")
             return False
 
         blockchain = self.get_blockchain()
         for i in range(1, len(txs)):
             tx = txs[i]
-            if not blockchain.validate_transaction(tx) or tx.is_coinbase():
+            if tx.is_coinbase():
+                self.logger.debug(f"Transaction #{i} is coinbase")
+                return False
+            if not blockchain.validate_transaction(tx):
+                self.logger.debug("Invalid transaction")
                 return False
 
         return True
@@ -92,14 +99,14 @@ class Blockchain(Role):
         return self.get_genesis_block().get_transactions()[0]
 
     def validate_transaction(self, tx: Transaction) -> bool:
-        # TODO: IMPLEMENT @Hung + @Hien
         utxo_set = self.get_blockchain().get_UTXO_set()
         inputs = tx.get_inputs()
         outputs = tx.get_outputs()
         signing_data = tx.get_signing_data()
 
         if len(inputs) == 0 or len(outputs) == 0:
-            self.logger.warning(f"Invalid input or output length: {len(inputs)} and {len(outputs)}")
+            self.logger.debug(
+                f"Invalid input or output length: {len(inputs)} and {len(outputs)}")
             return False
 
         # Calculate total input amount
@@ -111,7 +118,7 @@ class Blockchain(Role):
 
             # Evaluate the locking script of each input
             if not self.__verify_txin(txin, signing_data):
-                self.logger.warning(f"Invalid unlocking script")
+                self.logger.warning(f"Invalid unlocking script. Txin: {txin}")
                 return False
 
             # Not an unspent transaction outputs
@@ -119,14 +126,15 @@ class Blockchain(Role):
                 self.logger.warning(f"Not an UTXO")
                 return False
             input_sum += utxo_set[key].get_amount()
-        
+
         # Calculate total output amount
         output_sum = 0
         for txout in outputs:
             output_sum += txout.get_amount()
 
         if input_sum < output_sum:
-            self.logger.warning(f"Input sum={input_sum} smaller than output sum={output_sum}")
+            self.logger.debug(
+                f"Input sum={input_sum} smaller than output sum={output_sum}")
             return False
 
         return True
@@ -155,12 +163,13 @@ class Blockchain(Role):
         unlocking_script = txin.get_unlocking_script()
         return (unlocking_script + locking_script).evaluate(signing_data)
 
-    @Role._rpc
+    # @Role._rpc
     def receive_new_block(self, block: Block, sender: str) -> None:
         existing_block = self.get_block_by_hash(block.get_header().get_hash())
         if existing_block:
             return
         if not self.__validate_block(block):
+            self.logger.warning(f"Invalid block")
             return
         self.__add_block(block)
         self.get_miner().receive_new_block()

@@ -1,15 +1,11 @@
-import socket
-
 import yaml
-from database.dbTable import createDb
 
 import utils
-# from blockchain import Blockchain
+from blockchain import Blockchain
+from database.dbTable import createDb
 from Miner import Miner
 from network import Network
 from Wallet import Wallet
-
-from blockchain import Blockchain, BlockHeader
 
 if __name__ == '__main__':
 
@@ -19,19 +15,19 @@ if __name__ == '__main__':
         createDb(config['db']['name'], config['db']
                  ['sample'], config['db']['debug'])
 
-        # network = Network(config=config["network"])
-        # network.start()
+        network = Network(config=config["network"])
+        network.start()
 
         blockchain = Blockchain(config=config["blockchain"])
         block = blockchain.get_genesis_block()
         block.insert()
-        # print(.get_header().insert())
-        # wallet = Wallet()
 
-        # miner = Miner(config=config["miner"])
+        wallet = Wallet()
 
-        # blockchain.start()
-        # miner.start()
+        miner = Miner(config=config["miner"])
+
+        blockchain.start()
+        miner.start()
 
     except:
         logger.exception("Could not start node. Please check config.yml")

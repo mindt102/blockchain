@@ -3,6 +3,7 @@ import os
 from ellipticcurve.ecdsa import Ecdsa
 from ellipticcurve.privateKey import PrivateKey
 
+import utils
 from blockchain import Blockchain, Script, Transaction, TxIn, TxOut
 from Role import Role
 from utils import encode_base58check, hash160
@@ -10,6 +11,7 @@ from utils import encode_base58check, hash160
 
 class Wallet(Role):
     '''Provide wallet functionality'''
+    logger = utils.get_logger(__name__)
 
     def __init__(self):
         self.wallet = self
@@ -91,7 +93,7 @@ class Wallet(Role):
         # ... ht is doing
         total = 0
         selected_utxo = dict()
-        
+
         for key, value in utxo_set.items():
             coin = value.get_amount()
             selected_utxo[key] = value

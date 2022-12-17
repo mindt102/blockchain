@@ -10,7 +10,7 @@ class Miner(Role):
 
     def __init__(self, config) -> None:
         self.__mempool = dict()
-        self.__mempool['test'] = self.create_coinbase_tx()
+        # self.__mempool['test'] = self.create_coinbase_tx()
         self.__config = config
         self.__new_block_found = True
         self.__new_block_received = False
@@ -48,7 +48,7 @@ class Miner(Role):
         if self.__new_block_received:
             return True
 
-    @Role._rpc  # type: ignore
+    # @Role._rpc  # type: ignore
     def receive_new_block(self):
         # TODO: IMPLEMENT
         self.__new_block_received = True

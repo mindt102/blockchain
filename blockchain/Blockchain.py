@@ -2,23 +2,30 @@ import queue
 
 from blockchain import Block, Transaction, TxIn, TxOut
 from Role import Role
+import database
 from utils import bits_to_target, get_logger
+from utils.hashing import hash256
 
 
 class Blockchain(Role):
     '''Provide blockchain functionality'''
     logger = get_logger(__name__)
 
-    def __init__(self, config: dict) -> None:
+    def __init__(self, config: dict, db_config: dict) -> None:
+        self.__genesis_block_path = config["genesis_block_path"]
+        self.__blocks = dict()  # TODO: remove this
         self.config = config
+        self.__init_db(db_config)
         self.__reward = config["initial_reward"]
         self.__bits = config["initial_bits"]
-        self.__genesis_block_path = config["genesis_block_path"]
         self.__genesis_block = self.__init_genesis_block()
 
-        self.__blocks = dict()  # TODO: remove this
         self.__update_UTXO_set()
         super().__init__(blockchain=self)
+        test_block = database.get_block_by_hash(
+            self.get_genesis_block().get_header().get_hash())
+        print(hash256(test_block.serialize()) == hash256(
+            self.get_genesis_block().serialize()))
 
     def run(self) -> None:
         while True:
@@ -59,7 +66,16 @@ class Blockchain(Role):
             block = Block.parse(f.read())[0]
         return block
 
-    # @Role._rpc
+    def __init_db(self, config):
+        try:
+            if not config["debug"]:
+                return
+            db = database.create_db(config)
+            genesis = self.__init_genesis_block()
+            self.__add_block(genesis, db)
+        except Exception:
+            self.logger.exception("Fail to initialize database.")
+
     def validate_block(self, block: Block) -> bool:
         return self.__validate_block(block)
 
@@ -113,7 +129,7 @@ class Blockchain(Role):
         input_sum = 0
         for txin in inputs:
             index = txin.get_output_index()
-            prevtx = txin.get_prev_tx()
+            prevtx = txin.get_prev_tx_hash()
             key = (prevtx, index)
 
             # Evaluate the locking script of each input
@@ -142,7 +158,7 @@ class Blockchain(Role):
     def __verify_txin(self, txin: TxIn, signing_data: str) -> bool:
         '''Verify a transaction input'''
         # If the input transaction is not in the UTXO set, return False
-        prev_tx = txin.get_prev_tx()
+        prev_tx = txin.get_prev_tx_hash()
         output_index = txin.get_output_index()
         if (prev_tx, output_index) not in self.__UTXO_set:
             return False
@@ -175,10 +191,14 @@ class Blockchain(Role):
         self.get_miner().receive_new_block()
         self.get_network().broadcast_new_block(block, excludes=[sender])
 
-    def __add_block(self, block: Block) -> None:
+    def __add_block(self, block: Block, db=None) -> None:
         # TODO: IMPLEMENT @NHM
         self.__blocks[block.get_header().get_hash()] = block
-        pass
+        # header_id = database.insert_header(block.get_header())
+        # for index, tx in enumerate(block.get_transactions()):
+        #     database.insert_tx(tx=tx, header_id=header_id,
+        #                        tx_index=index, db=db)
+        database.insert_block(block, db=db)
 
     def __update_UTXO_set(self) -> None:
         '''Query all unspent transaction outputs from the blockchain database'''

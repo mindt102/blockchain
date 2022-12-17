@@ -38,7 +38,7 @@ def is_spent(txin: TxIn, utxo_set: dict) -> bool:
 #         if key not in utxo_set:
 #             return False
 #         input += utxo_set[key].get_amount()
-    
+
 #     output_sum = 0
 #     for txout in outputs:
 #         output_sum += txout.get_amount()
@@ -58,19 +58,19 @@ def validate_transaction(tx: Transaction) -> bool:
     # for tx_in in inputs:
         # if tx_in.is_coinbase():
         #     return False
-    
+
     # Calculate total input amount
     input_sum = 0
     for txin in inputs:
         index = txin.get_output_index()
-        prevtx = txin.get_prev_tx()
+        prevtx = txin.get_prev_tx_hash()
         key = (prevtx, index)
 
         # Not an unspent transaction outputs
         if key not in utxo_set:
             return False
         input_sum += utxo_set[key].get_amount()
-    
+
     # Calculate total output amount
     output_sum = 0
     for txout in outputs:
@@ -80,6 +80,7 @@ def validate_transaction(tx: Transaction) -> bool:
         return False
 
     return True
+
 
 print(validate_transaction(tx))
 # print(blockchain.validate_transaction(tx))

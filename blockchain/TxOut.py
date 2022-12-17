@@ -1,6 +1,6 @@
 
 from blockchain.Script import Script
-from database.dbController import DatabaseController
+# from database.DatabaseController import DatabaseController
 
 
 class TxOut:
@@ -39,18 +39,18 @@ class TxOut:
     def get_locking_script(self) -> Script:
         return self.__locking_script
 
-    __tableName = "tx_outputs"
-    __tableCol = ["tx_id", "indexTx", "addr", "locking_script"]
+    # __tableName = "tx_outputs"
+    # __tableCol = ["tx_id", "indexTx", "addr", "locking_script"]
 
-    @classmethod
-    def select(cls, txId: int, txIndex: int):
-        __db = DatabaseController()
-        txOut = __db.selectOne(
-            cls.__tableName, "tx_id,indexTx", "*", (txId, txIndex))
-        return txOut[0]
+    # @classmethod
+    # def select(cls, txId: int, txIndex: int):
+    #     __db = DatabaseController()
+    #     txOut = __db.selectOne(
+    #         cls.__tableName, "tx_id,indexTx", "*", (txId, txIndex))
+    #     return txOut[0]
 
-    def insert(self, txId: int, txIndex: int):
-        values = (txId, txIndex, self.get_addr(),
-                  self.__locking_script.serialize())
-        __db = DatabaseController()
-        return __db.insert(self.__tableName, self.__tableCol, values)
+    # def insert(self, txId: int, txIndex: int):
+    #     values = (txId, txIndex, self.get_addr(),
+    #               self.__locking_script.serialize())
+    #     __db = DatabaseController()
+    #     return __db.insert(self.__tableName, self.__tableCol, values)

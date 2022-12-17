@@ -71,6 +71,11 @@
                 "type": "BLOB",
                 "length": 32,
                 "null": false
+            },
+            {
+                "name": "tx_index",
+                "type": "integer",
+                "null": false
             }
         ]
     },
@@ -93,7 +98,12 @@
                 "refCol": "id"
             },
             {
-                "name": "indexTx",
+                "name": "txout_index",
+                "type": "integer",
+                "null": false
+            },
+            {
+                "name": "amount",
                 "type": "integer",
                 "null": false
             },
@@ -113,9 +123,22 @@
         "tableName": "tx_inputs",
         "tableCol": [
             {
-                "name": "tx_output_id",
+                "name": "tx_id",
                 "type": "integer",
                 "null": false,
+                "foreignKey": true,
+                "refTable": "transactions",
+                "refCol": "id"
+            },
+            {
+                "name": "txin_index",
+                "type": "integer",
+                "null": false
+            },
+            {
+                "name": "tx_output_id",
+                "type": "integer",
+                "null": true,
                 "foreignKey": true,
                 "refTable": "tx_outputs",
                 "refCol": "id"

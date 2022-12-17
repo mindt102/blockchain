@@ -1,9 +1,11 @@
 from ellipticcurve.ecdsa import Ecdsa
+
 from blockchain import Script
-from blockchain.TxOut import TxOut
-from database.dbController import DatabaseController
-from utils import hash256, encode_base58
 from blockchain.TxIn import TxIn
+from blockchain.TxOut import TxOut
+# import database
+# from database.DatabaseController import DatabaseController
+from utils import encode_base58, hash256
 
 
 class Transaction:
@@ -83,7 +85,7 @@ class Transaction:
             return False
 
         first_input = inputs[0]
-        prev_tx = first_input.get_prev_tx()
+        prev_tx = first_input.get_prev_tx_hash()
         output_index = first_input.get_output_index()
 
         if prev_tx != b'\x00' * 32 or output_index != 0xffffffff:
@@ -91,15 +93,18 @@ class Transaction:
 
         return True
 
-    __tableName = "transactions"
-    __tableCol = ["block_header_id", "tx_hash"]
+    # __tableName = "transactions"
+    # __tableCol = ["block_header_id", "tx_hash"]
 
-    def insert(self, blockHeaderId: int):
-        values = (blockHeaderId, self.get_hash())
-        __db = DatabaseController()
-        txId = __db.insert(self.__tableName, self.__tableCol, values)
-        for idx, txOut in enumerate(self.get_outputs()):
-            txOut.insert(txId, idx)
-        for idx, txIn in enumerate(self.get_inputs()):
-            if not self.is_coinbase():
-                txIn.insert()
+    # def insert(self, blockHeaderId: int):
+    #     values = (blockHeaderId, self.get_hash())
+    #     __db = DatabaseController()
+    #     txId = __db.insert(self.__tableName, self.__tableCol, values)
+    #     for idx, txOut in enumerate(self.get_outputs()):
+    #         # txOut.insert(txId, idx)
+    #         database.insert_txout(txout=txOut, txid=txId, index=idx, db=__db)
+
+    #     for idx, txIn in enumerate(self.get_inputs()):
+    #         if not self.is_coinbase():
+    #             txIn.insert()
+    #             database.insert_txin(txin=txIn, db=__db)

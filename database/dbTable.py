@@ -1,8 +1,9 @@
-from database.dbController import DatabaseController
-from database.generateQuery import GenerateQuery
-import os
 import json
-import time
+import os
+
+from database.DatabaseController import DatabaseController
+from database.GenerateQuery import GenerateQuery
+
 
 def createDb(dbName: str, dbSample: str, isDebug: bool = True):
     # Check file exist and delete

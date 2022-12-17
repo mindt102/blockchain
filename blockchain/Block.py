@@ -4,11 +4,16 @@ from utils import hash256
 
 
 class Block:
-    def __init__(self, transactions: list[Transaction], prev_block_hash: bytes = None, bits: int = None) -> None:
+    def __init__(self, transactions: list[Transaction], prev_block_hash: bytes = None, bits: int = None, header: BlockHeader = None) -> None:
         self.__transactions = transactions
-        if prev_block_hash and bits:
+        if header:
+            self.__header = header
+        elif prev_block_hash and bits:
             self.__header = BlockHeader(
                 prev_block_hash, self.compute_merkle_root(), bits)
+        else:
+            raise ValueError(
+                'Either header or prev_block_hash and bits must be provided')
 
     def get_header(self) -> BlockHeader:
         return self.__header
@@ -20,8 +25,8 @@ class Block:
     def get_transactions(self) -> list[Transaction]:
         return self.__transactions
 
-    def __set_header(self, header: BlockHeader) -> None:
-        self.__header = header
+    # def set_header(self, header: BlockHeader) -> None:
+    #     self.__header = header
 
     def __repr__(self) -> str:
         return f'''Block(
@@ -39,13 +44,14 @@ class Block:
         while stream:
             tx, stream = Transaction.parse(stream)
             txs.append(tx)
-        block = cls(txs, header.get_prev_block_hash(), header.get_bits())
-        block.__set_header(header)
+        block = cls(transactions=txs, header=header)
+        # block.set_header(header)
         return block, stream
 
-    def insert(self):
-        blockHeaderId = self.get_header().insert()
-        for tx in self.get_transactions():
-            tx.insert(blockHeaderId)
-
-        
+    # def insert(self):
+    #     # blockHeaderId = self.get_header().insert()
+    #     header_id = database.insert_header(self.get_header())
+    #     print(header_id)
+    #     for tx in self.get_transactions():
+    #         # tx.insert(header_id)
+    #         database.insert_tx(tx=tx, header_id=header_id)

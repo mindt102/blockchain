@@ -1,10 +1,9 @@
 import queue
 
+import database
 from blockchain import Block, Transaction, TxIn, TxOut
 from Role import Role
-import database
 from utils import bits_to_target, get_logger
-from utils.hashing import hash256
 
 
 class Blockchain(Role):
@@ -13,7 +12,6 @@ class Blockchain(Role):
 
     def __init__(self, config: dict, db_config: dict) -> None:
         self.__genesis_block_path = config["genesis_block_path"]
-        self.__blocks = dict()  # TODO: remove this
         self.config = config
         self.__init_db(db_config)
         self.__reward = config["initial_reward"]
@@ -22,10 +20,8 @@ class Blockchain(Role):
 
         self.__update_UTXO_set()
         super().__init__(blockchain=self)
-        test_block = database.get_block_by_hash(
-            self.get_genesis_block().get_header().get_hash())
-        print(hash256(test_block.serialize()) == hash256(
-            self.get_genesis_block().serialize()))
+
+        self.__orphan_blocks: dict[bytes, Block] = dict()
 
     def run(self) -> None:
         while True:
@@ -50,16 +46,9 @@ class Blockchain(Role):
     def get_genesis_block_path(self) -> str:
         return self.__genesis_block_path
 
-    def get_latest_block(self) -> Block:
+    def get_top_block(self) -> Block:
         # TODO: IMPLEMENT @NHM
-        return self.get_genesis_block()
-
-    def get_block_by_hash(self, block_hash: bytes) -> Block:
-        # TODO: IMPLEMENT @NHM
-        if block_hash in self.__blocks:
-            return self.__blocks[block_hash]
-        else:
-            return None
+        return database.get_top_block()
 
     def __init_genesis_block(self) -> Block:
         with open(self.__genesis_block_path, 'rb') as f:
@@ -72,14 +61,41 @@ class Blockchain(Role):
                 return
             db = database.create_db(config)
             genesis = self.__init_genesis_block()
-            self.__add_block(genesis, db)
+            database.insert_block(genesis, height=0, db=db)
         except Exception:
             self.logger.exception("Fail to initialize database.")
 
     def validate_block(self, block: Block) -> bool:
-        return self.__validate_block(block)
+        # Check block header hash
+        if not block.get_header().check_hash():
+            self.logger.debug("Invalid header hash")
+            return False
 
-    def __validate_block(self, block: Block) -> bool:
+        # Check first transaction is coinbase
+        txs = block.get_transactions()
+        if not txs[0].is_coinbase():
+            self.logger.debug("First tx is not coinbase")
+            return False
+
+        # Check merkle root received vs computed
+        block_merkle_root = block.compute_merkle_root()
+        if block_merkle_root != block.get_header().get_merkle_root():
+            self.logger.debug("Invalid merkel root")
+            return False
+
+        # Check validity of transactions
+        for i in range(1, len(txs)):
+            tx = txs[i]
+            if tx.is_coinbase():
+                self.logger.debug(f"Transaction #{i} is coinbase")
+                return False
+            if not self.validate_transaction(tx):
+                self.logger.debug("Invalid transaction")
+                return False
+
+        return True
+
+    # def __validate_block(self, block: Block) -> bool:
         if not block.get_header().check_hash():
             self.logger.debug("Invalid header hash")
             return False
@@ -181,24 +197,43 @@ class Blockchain(Role):
 
     # @Role._rpc
     def receive_new_block(self, block: Block, sender: str) -> None:
-        existing_block = self.get_block_by_hash(block.get_header().get_hash())
+        block_hash = block.get_header().get_hash()
+
+        db = database.DatabaseController()
+
+        existing_block = database.get_block_by_hash(block_hash, db=db)
         if existing_block:
             return
-        if not self.__validate_block(block):
+        if not self.validate_block(block):
             self.logger.warning(f"Invalid block")
             return
-        self.__add_block(block)
-        self.get_miner().receive_new_block()
-        self.get_network().broadcast_new_block(block, excludes=[sender])
 
-    def __add_block(self, block: Block, db=None) -> None:
-        # TODO: IMPLEMENT @NHM
-        self.__blocks[block.get_header().get_hash()] = block
-        # header_id = database.insert_header(block.get_header())
-        # for index, tx in enumerate(block.get_transactions()):
-        #     database.insert_tx(tx=tx, header_id=header_id,
-        #                        tx_index=index, db=db)
-        database.insert_block(block, db=db)
+        prev_block_hash = block.get_header().get_prev_block_hash()
+        prev_header, _, prev_height = database.get_header_by_hash(
+            prev_block_hash, db=db)
+        if prev_header is None:
+            self.logger.warning(f"Orphan block")
+            self.__orphan_blocks[prev_block_hash] = block
+            return
+
+        height = prev_height + 1
+        database.insert_block(block, height, db=db)
+        self.logger.debug(
+            f"Block inserted: {database.get_block_by_hash(block_hash, db=db)}")
+
+        parent_hash = block_hash
+        while parent_hash in self.__orphan_blocks:
+            orphan_block = self.__orphan_blocks[parent_hash]
+            height += 1
+            database.insert_block(orphan_block, height, db=db)
+            del self.__orphan_blocks[parent_hash]
+            parent_hash = orphan_block.get_header().get_hash()
+
+        top_block = database.get_top_block(db=db)
+        if top_block.get_header().get_hash() == block_hash:
+            self.get_miner().receive_new_block()
+            self.get_network().broadcast_new_block(block, excludes=[sender])
+        db.close()
 
     def __update_UTXO_set(self) -> None:
         '''Query all unspent transaction outputs from the blockchain database'''

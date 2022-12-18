@@ -22,7 +22,7 @@ def get_tx_by_hash(tx_hash: bytes, db=None):
 
 
 @query_func
-def get_tx_by_header(header_id: int, db=None) -> list[Transaction]:
+def get_txs_by_header(header_id: int, db=None) -> list[Transaction]:
     # tx_data = db.selectOne(__tableName, "id", "*", values=(header_id,))
     data = db.selectAll(__tableName, where="block_header_id",
                         sortby="tx_index", params=(header_id,))

@@ -22,7 +22,6 @@ class Script:
         return cls([signature, pubkey])
 
     def evaluate(self, z) -> bool:
-        # TODO: Validate a script @NHM
         cmds = self.cmds[:]
         stack = []
         alt_stack = []
@@ -95,5 +94,17 @@ class Script:
             count += 1
         return cls(cmds), stream
 
+    @classmethod
+    def lock_to_addr(cls, script: 'Script') -> str:
+        if (script.cmds[0] == b'\x76'
+                and script.cmds[1] == b'\xa9'
+                and script.cmds[3] == b'\x88'
+                and script.cmds[4] == b'\xac'):
+            return utils.encode_base58check(script.cmds[2])
+        raise ValueError("Invalid lock script")
+
     def __repr__(self):
-        return f'Script({self.cmds})'
+        return f'Script({self.to_json()})'
+
+    def to_json(self) -> dict:
+        return [cmd.hex() for cmd in self.cmds]

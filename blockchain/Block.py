@@ -27,12 +27,14 @@ class Block:
 
     # def set_header(self, header: BlockHeader) -> None:
     #     self.__header = header
+    def to_json(self) -> dict:
+        return {
+            'header': self.__header.to_json(),
+            'transactions': [tx.to_json() for tx in self.__transactions]
+        }
 
     def __repr__(self) -> str:
-        return f'''Block(
-    header = {self.__header},
-    transactions = {self.__transactions}
-)'''
+        return f'''Block({self.to_json()})'''
 
     def serialize(self) -> bytes:
         return self.__header.serialize() + b''.join([tx.serialize() for tx in self.__transactions])

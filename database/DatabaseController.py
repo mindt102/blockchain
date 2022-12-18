@@ -62,7 +62,6 @@ def create_db(config: dict):
 
 def query_func(func):
     def wrapper(*args, **kwargs):
-
         # print(f"args = {args}, kwargs = {kwargs}")
         db = None
         if "db" not in kwargs:

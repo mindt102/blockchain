@@ -13,11 +13,14 @@ class Transaction:
         self.__inputs = inputs
         self.__outputs = outputs
 
+    def to_json(self) -> dict:
+        return {
+            'inputs': [txin.to_json() for txin in self.__inputs],
+            'outputs': [txout.to_json() for txout in self.__outputs]
+        }
+
     def __repr__(self) -> str:
-        return f'''Transaction(
-    inputs={self.__inputs},
-    outputs={self.__outputs}
-)'''
+        return f'''Transaction({self.to_json()})'''
 
     def sign(self, priv_key) -> None:
         empty_inputs = [txin.get_empty_copy() for txin in self.__inputs]

@@ -1,7 +1,7 @@
 import queue
 
 import utils
-from blockchain import Block, Transaction, TxIn, TxOut
+from blockchain import Block, Blockchain, Transaction, TxIn, TxOut
 from Role import Role
 
 
@@ -31,6 +31,7 @@ class Miner(Role):
 
     def __idle(self):
         if self.__new_block_found:
+            self.logger.info("Restart mining")
             self.reset_candidate_block()
             self.__new_block_found = False
         else:
@@ -42,23 +43,25 @@ class Miner(Role):
                 self.__new_block_found = True
                 self.logger.info('New block found')
                 self.get_network().broadcast_new_block(self.__candidate_block)
-                return True
+                # return True
             else:
                 candidate_header.update_nonce()
-        if self.__new_block_received:
-            return True
+        # if self.__new_block_received:
+        #     return True
 
     # @Role._rpc  # type: ignore
     def receive_new_block(self):
         # TODO: IMPLEMENT
         self.__new_block_received = True
         self.logger.debug('New block received')
+        self.__new_block_found = True
 
     def reset_candidate_block(self):
         candidate_txs = self.__get_candidate_txs()
-        prev_block = self.get_blockchain().get_latest_block()
+        blockchain: Blockchain = self.get_blockchain()
+        prev_block = blockchain.get_top_block()
         prev_hash = prev_block.get_header().get_hash()
-        bits = self.get_blockchain().get_bits()
+        bits = blockchain.get_bits()
         self.__candidate_block = Block(candidate_txs, prev_hash, bits)
 
     def create_coinbase_tx(self) -> Transaction:
@@ -80,10 +83,11 @@ class Miner(Role):
         return [coinbase_tx] + mempool_txs
 
     @ Role._rpc  # type: ignore
-    def get_tx_by_hash(self, tx_hash: bytes) -> Transaction:
+    def get_mempooltx_by_hash(self, tx_hash: bytes) -> Transaction:
         '''Get transaction by hash from mempool'''
-        # TODO: IMPLEMENT
-        return None
+        # TODO: TEST
+        if tx_hash in self.__mempool:
+            return self.__mempool[tx_hash]
 
     def set_network_status(self, status: bool = True):
         self.__is_network_ready = status

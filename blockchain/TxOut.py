@@ -7,19 +7,28 @@ class TxOut:
     def __init__(self, amount: int, locking_script: Script = None, addr: str = None) -> None:
         self.__amount = amount
         if not locking_script:
+            if not addr:
+                raise ValueError(
+                    "Either locking_script or addr must be provided")
             locking_script = Script.get_lock(addr)
 
         self.__locking_script = locking_script
+        if not addr:
+            addr = Script.lock_to_addr(locking_script)
         self.__addr = addr
 
     def serialize(self) -> bytes:
         return self.__amount.to_bytes(8, 'little') + self.__locking_script.serialize()
 
+    def to_json(self) -> dict:
+        return {
+            'amount': self.__amount,
+            'locking_script': self.__locking_script.to_json(),
+            'addr': self.__addr
+        }
+
     def __repr__(self) -> str:
-        return f'''TxOut(
-    amount={self.__amount},
-    locking_script={self.__locking_script}
-)'''
+        return f'''TxOut({self.to_json()})'''
 
     @classmethod
     def parse(cls, stream: bytes) -> tuple['TxOut', bytes]:
@@ -34,7 +43,7 @@ class TxOut:
     def get_addr(self) -> str:
         # return self.__addr
         # FIXME: Implement this method
-        return ""
+        return self.__addr
 
     def get_locking_script(self) -> Script:
         return self.__locking_script

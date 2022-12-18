@@ -14,12 +14,15 @@ class TxIn:
     def serialize(self) -> bytes:
         return self.__prev_tx_hash + self.__output_index.to_bytes(4, 'little') + self.__unlocking_script.serialize()
 
+    def to_json(self) -> dict:
+        return {
+            'prev_tx': self.__prev_tx_hash.hex(),
+            'output_index': self.__output_index,
+            'unlocking_script': self.__unlocking_script.to_json()
+        }
+
     def __repr__(self) -> str:
-        return f'''TxIn(
-    prev_tx={self.__prev_tx_hash},
-    output_index={self.__output_index},
-    unlocking_script={self.__unlocking_script}
-)'''
+        return f'''TxIn({self.to_json()})'''
 
     @classmethod
     def parse(cls, stream: bytes) -> tuple['TxIn', bytes]:

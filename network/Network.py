@@ -37,7 +37,7 @@ class Network(Role):
 
     def run(self):
         self.__discover_known_nodes(self.__known_nodes)
-        self.start_peers_manager()
+        self.__start_peers_manager()
         while True:
             try:
                 func, args, kwargs = self.q.get(timeout=self.q_timeout)
@@ -65,7 +65,7 @@ class Network(Role):
                                  args=(client_sock, addr)).start()
 
     # @Role._rpc  # type: ignore
-    def start_peers_manager(self):
+    def __start_peers_manager(self):
         threading.Thread(target=self.__manage_peers).start()
 
     def __discover_known_nodes(self, known_nodes):
@@ -90,17 +90,25 @@ class Network(Role):
                 self.logger.exception(
                     f"Could not connect to {host}:{port}")
 
+    def __sync_blockchain(self):
+        pass
+
     def __manage_peers(self):
         while True:
             handshaked_peers = self.get_handshaked_peers()
             if len(handshaked_peers) < self.__minpeers:
                 self.broadcast_addr()
-            else:
+            else:  # Network is ready
+                # Sync blockchain
+                self.__sync_blockchain()
+
+                # Start miner if not started
                 miner = self.get_miner()
                 if not miner.get_network_status():
                     miner.set_network_status(True)
                     self.logger.info(
                         f"Network is ready. Connected to {len(handshaked_peers)} peers")
+
             # TODO: Check if peer is alive
 
             time.sleep(self.__peer_managing_rate)

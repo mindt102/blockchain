@@ -15,18 +15,18 @@ if __name__ == '__main__':
         # createDb(config['db']['name'], config['db']
         #          ['sample'], config['db']['debug'])
 
-        # network = Network(config=config["network"])
-        # network.start()
+        network = Network(config=config["network"])
+        network.start()
 
         blockchain = Blockchain(
             config=config["blockchain"], db_config=config["db"])
 
-        # wallet = Wallet()
+        wallet = Wallet()
 
-        # miner = Miner(config=config["miner"])
+        miner = Miner(config=config["miner"])
 
-        # blockchain.start()
-        # miner.start()
+        blockchain.start()
+        miner.start()
 
     except:
         logger.exception("Could not start node. Please check config.yml")

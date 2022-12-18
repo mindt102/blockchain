@@ -42,14 +42,18 @@ class BlockHeader:
     def get_merkle_root(self) -> bytes:
         return self.__merkle_root
 
+    def to_json(self) -> dict:
+        return {
+            'prev_block_hash': self.__prev_block_hash.hex(),
+            'merkle_root': self.__merkle_root.hex(),
+            'timestamp': self.__timestamp,
+            'bits': self.__bits,
+            'nonce': self.__nonce,
+            'hash': self.get_hash().hex()
+        }
+
     def __repr__(self) -> str:
-        return f'''BlockHeader(
-    prev_block_hash={self.__prev_block_hash.hex()},
-    merkle_root={self.__merkle_root.hex()},
-    timestamp={self.__timestamp},
-    bits={self.__bits},
-    nonce={self.__nonce}
-)'''
+        return f'''BlockHeader({self.to_json()})'''
 
     def serialize(self) -> bytes:
         return self.__prev_block_hash + self.__merkle_root + self.__timestamp.to_bytes(4, 'little') + self.get_bits().to_bytes(4, 'little') + self.__nonce.to_bytes(4, 'little')

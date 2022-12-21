@@ -1,4 +1,5 @@
 import queue
+import threading
 
 import utils
 from blockchain import Block, Blockchain, Transaction, TxIn, TxOut
@@ -6,61 +7,55 @@ from Role import Role
 
 
 class Miner(Role):
-    logger = utils.get_logger(__name__)
+    __logger = utils.get_logger(__name__)
 
-    def __init__(self, config) -> None:
+    def __init__(self, config, *args, **kwargs) -> None:
         self.__mempool = dict()
         # self.__mempool['test'] = self.create_coinbase_tx()
         self.__config = config
         self.__new_block_found = True
-        self.__new_block_received = False
         self.__candidate_block = None
-
-        self.__is_network_ready = False
-        super().__init__(miner=self)
+        super().__init__(miner=self, *args, **kwargs)
 
     def run(self):
-        while True:
+        self.__reset_candidate_block()
+        while self.active():
             try:
                 func, args, kwargs = self.q.get(timeout=self.q_timeout)
                 func(*args, **kwargs)
             except queue.Empty:
-                if self.__is_network_ready:
+                if self.get_network().is_ready() and self.get_blockchain().is_ready():
                     if self.__idle():
                         break
 
     def __idle(self):
         if self.__new_block_found:
-            self.logger.info("Restart mining")
-            self.reset_candidate_block()
+            self.__reset_candidate_block()
             self.__new_block_found = False
+
+        candidate_header = self.__candidate_block.get_header()
+        nonce = candidate_header.get_nonce()
+        if nonce % self.__config['logging_rate'] == 0:
+            self.__logger.info(f'nonce: {nonce}')
+        if candidate_header.check_hash():
+            self.__new_block_found = True
+            self.__logger.info('New block found')
+
+            # self.get_network().broadcast_new_block(self.__candidate_block)
+
+            self.get_blockchain().receive_new_block(self.__candidate_block, sender=None)
         else:
-            candidate_header = self.__candidate_block.get_header()
-            nonce = candidate_header.get_nonce()
-            if nonce % self.__config['logging_rate'] == 0:
-                self.logger.info(f'nonce: {nonce}')
-            if candidate_header.check_hash():
-                self.__new_block_found = True
-                self.logger.info('New block found')
-                self.get_network().broadcast_new_block(self.__candidate_block)
-                # return True
-            else:
-                candidate_header.update_nonce()
-        # if self.__new_block_received:
-        #     return True
+            candidate_header.update_nonce()
 
     # @Role._rpc  # type: ignore
     def receive_new_block(self):
-        # TODO: IMPLEMENT
-        self.__new_block_received = True
-        self.logger.debug('New block received')
+        # FIXME: IMPLEMENT
         self.__new_block_found = True
 
-    def reset_candidate_block(self):
+    def __reset_candidate_block(self):
         candidate_txs = self.__get_candidate_txs()
         blockchain: Blockchain = self.get_blockchain()
-        prev_block = blockchain.get_top_block()
-        prev_hash = prev_block.get_header().get_hash()
+        prev_hash = blockchain.get_top_hash()
         bits = blockchain.get_bits()
         self.__candidate_block = Block(candidate_txs, prev_hash, bits)
 
@@ -88,9 +83,4 @@ class Miner(Role):
         # TODO: TEST
         if tx_hash in self.__mempool:
             return self.__mempool[tx_hash]
-
-    def set_network_status(self, status: bool = True):
-        self.__is_network_ready = status
-
-    def get_network_status(self) -> bool:
-        return self.__is_network_ready
+        return None

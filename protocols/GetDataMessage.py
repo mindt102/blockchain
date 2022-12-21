@@ -1,6 +1,7 @@
-
 import utils
+from blockchain import Blockchain
 from datastructure import VarInt
+from protocols.BlockMessage import BlockMessage
 from protocols.InvItem import InvItem
 
 
@@ -12,14 +13,17 @@ class GetDataMessage:
         self.__items = items
         self.__count = VarInt(len(items))
 
+    def get_items(self) -> list:
+        return self.__items
+
     def serialize(self) -> bytes:
-        return self.__count.value + b''.join([item.serialize() for item in self.__items])
+        return self.__count.serialize() + b''.join([item.serialize() for item in self.__items])
 
     @classmethod
     def parse(cls, stream: bytes) -> tuple['GetDataMessage', bytes]:
         count, stream = VarInt.parse(stream)
         items = []
-        for _ in range(count.__value):
+        for _ in range(count.get_value()):
             item, stream = InvItem.parse(stream)
             items.append(item)
         return cls(items), stream
@@ -32,7 +36,18 @@ class GetDataMessage:
         peer = network.get_peer(host)
         if not (peer and peer.is_handshake_done()):
             cls.__logger.warning(
-                f"Received inv message from {host} before handshake")
+                f"Received getdata message from {host} before handshake")
             return
         getdata, _ = cls.parse(payload)
-        cls.__logger.info(getdata)
+        items = getdata.get_items()
+        for item in items:
+            if item.get_type() == InvItem.MSG_TX:
+                # TODO: Implement
+                pass
+            elif item.get_type() == InvItem.MSG_BLOCK:
+                block_hash = item.get_hash()
+                blockchain: Blockchain = network.get_blockchain()
+                block = blockchain.get_block_by_hash(block_hash)
+                if block:
+                    blockmsg = BlockMessage(block)
+                    peer.send(blockmsg)

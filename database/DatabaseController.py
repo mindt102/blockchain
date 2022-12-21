@@ -49,22 +49,24 @@ class DatabaseController:
 
 def create_db(config: dict):
     db_file = config["name"]
+    if os.path.exists(db_file) and not config["debug"]:
+        return
     if os.path.exists(db_file):
         os.remove(db_file)
     db = DatabaseController()
     with open(config["sample"]) as f:
         tables_config = json.loads(f.read())
-        create_queries = map(lambda conf: GenerateQuery(**conf), tables_config)
+        create_queries = map(
+            lambda conf: GenerateQuery(**conf), tables_config)
         for query in create_queries:
             db.execute(str(query))
-    return db
 
 
 def query_func(func):
     def wrapper(*args, **kwargs):
         # print(f"args = {args}, kwargs = {kwargs}")
         db = None
-        if "db" not in kwargs:
+        if "db" not in kwargs or not kwargs["db"]:
             db = DatabaseController()
             kwargs["db"] = db
 

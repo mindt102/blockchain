@@ -6,3 +6,11 @@ services:
     image: ucoin
     deploy:
       replicas: 3
+    
+  node:
+    image: ucoin
+    container_name: unode
+    volumes:
+      - ./data:/usr/src/app/data
+    profiles:
+      - donotstart

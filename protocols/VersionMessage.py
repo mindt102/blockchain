@@ -1,4 +1,3 @@
-import struct
 import time
 import random
 import utils
@@ -29,6 +28,9 @@ class VersionMessage():
     def set_addr_from(self, addr_from: NetworkAddress):
         self.__addr_from = addr_from
 
+    def get_start_height(self):
+        return self.__start_height
+
     def serialize(self):
         return self.__timestamp.to_bytes(8, 'little') + self.__addr_recv.serialize() + self.__addr_from.serialize() + self.__nonce.to_bytes(8, 'little') + self.__user_agent.serialize() + self.__start_height.to_bytes(4, 'little')
 
@@ -58,17 +60,29 @@ class VersionMessage():
         if remote_nodeid == network.get_id():
             raise RuntimeError("Connected to self")
 
-        peer = network.get_peer(host) or network.add_peer(
+        from network import Peer
+        peer: Peer = network.get_peer(host) or network.add_peer(
             remote_host, remote_port)
         if peer:
+            if peer.is_handshake_done():
+                cls.__logger.warning(
+                    f'Received version from {host} after handshake')
+                peer.deactivate()
+
             if peer.is_version_received():
                 cls.__logger.warning(f'Already received version from {host}')
                 return
+
+            if not peer.is_active():
+                peer.set_active()
             peer.received_version()
             peer.send(VerAckMessage())
             if not peer.is_version_sent():
+                height = network.get_blockchain().get_height()
                 peer.send_version(network.get_id(),
-                                  network.get_host(), network.get_port())
+                                  network.get_host(), network.get_port(), height)
+
+        network.set_max_peer_start_height(version.get_start_height())
 
     def __repr__(self):
         return f'VersionMessage(version={self.__version}, services={self.__services}, timestamp={self.__timestamp}, addr_recv={self.__addr_recv}, addr_from={self.__addr_from}, nonce={self.__nonce}, user_agent={self.__user_agent}, start_height={self.__start_height}, relay={self.__relay})'

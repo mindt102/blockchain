@@ -4,54 +4,61 @@ import select
 import socket
 import threading
 import time
+from blockchain import Blockchain
 
 import utils
 from network import NetworkAddress, NetworkEnvelope, Peer
-from protocols import AddrMessage, BlockMessage, messages
+from protocols import AddrMessage, BlockMessage, GetBlocksMessage, InvItem, messages
 from Role import Role
 
 
 class Network(Role):
     '''Provide networking functionality'''
-    logger = utils.get_logger(__name__)
+    __logger = utils.get_logger(__name__)
 
-    def __init__(self, config):
+    def __init__(self, config, *args, **kwargs):
         self.__id = random.getrandbits(64)
         self.__host = socket.gethostbyname(socket.gethostname())
 
         self.__port = config["port"] if "port" in config else 8333
         self.__maxpeers = config["max_peers"]
         self.__minpeers = config["min_peers"]
-        self.__peer_managing_rate = config["peer_managing_rate"]
+        self.__network_managing_rate = config["peer_managing_rate"]
         self.__known_nodes = config["known_nodes"] if "known_nodes" in config else [
         ]
-
-        self.__sock = self.__make_server_sock()
 
         self.__peer_lock = threading.Lock()
         self.__peers: dict[str:Peer] = {}
 
         self.__init_handlers()
+        self.__blockchain_sync_started = False
 
-        super().__init__(network=self)
+        super().__init__(network=self, *args, **kwargs)
+        self.__max_peer_start_height = 0
+
+        self.__is_ready = False
+
+        self.__item_lock = threading.Lock()
+        self.__requested_items = set()
 
     def run(self):
+        self.__sock = self.__make_server_sock()  # TODO: test
         self.__discover_known_nodes(self.__known_nodes)
-        self.__start_peers_manager()
-        while True:
+        self.__start_network_manager()
+        while self.active():
             try:
                 func, args, kwargs = self.q.get(timeout=self.q_timeout)
                 func(*args, **kwargs)
             except queue.Empty:
                 self.__idle()
             except KeyboardInterrupt:
-                self.logger.info("Closing server")
+                self.__logger.info("Closing server")
                 break
             except socket.timeout:
-                self.logger.info("Timeout")
+                self.__logger.info("Timeout")
                 break
             except:
-                self.logger.exception("Error in network loop")
+                self.__logger.exception("Error in network loop")
                 break
         self.__sock.close()
 
@@ -65,8 +72,8 @@ class Network(Role):
                                  args=(client_sock, addr)).start()
 
     # @Role._rpc  # type: ignore
-    def __start_peers_manager(self):
-        threading.Thread(target=self.__manage_peers).start()
+    def __start_network_manager(self):
+        threading.Thread(target=self.__manage_network).start()
 
     def __discover_known_nodes(self, known_nodes):
         for known_node in known_nodes:
@@ -74,7 +81,7 @@ class Network(Role):
             try:
                 host = socket.gethostbyname(host)
             except socket.gaierror:
-                self.logger.warning(
+                self.__logger.warning(
                     f"Could not resolve hostname {host}")
                 continue
             if host == self.__host:
@@ -84,34 +91,48 @@ class Network(Role):
             except ConnectionRefusedError:
                 pass
             except RuntimeError:
-                self.logger.warning(
+                self.__logger.warning(
                     f"Could not connect to {host}:{port}")
             except:
-                self.logger.exception(
+                self.__logger.exception(
                     f"Could not connect to {host}:{port}")
 
-    def __sync_blockchain(self):
-        pass
+    def __start__sync_blockchain(self):
+        blockchain: Blockchain = self.get_blockchain()
+        block_locator_hashes = blockchain.get_block_locator_hashes()
+        getblocks_msg = GetBlocksMessage(block_locator_hashes)
+        self.broadcast(getblocks_msg)
 
-    def __manage_peers(self):
+        self.__blockchain_sync_started = True
+        self.__logger.info(
+            f"Syncing blockchain with max peer height {self.__max_peer_start_height}")
+
+    def __manage_network(self):
         while True:
             handshaked_peers = self.get_handshaked_peers()
             if len(handshaked_peers) < self.__minpeers:
                 self.broadcast_addr()
-            else:  # Network is ready
-                # Sync blockchain
-                self.__sync_blockchain()
-
-                # Start miner if not started
-                miner = self.get_miner()
-                if not miner.get_network_status():
-                    miner.set_network_status(True)
-                    self.logger.info(
+            else:
+                # Network is ready
+                if not self.is_ready():
+                    self.set_ready()
+                    self.__logger.info(
                         f"Network is ready. Connected to {len(handshaked_peers)} peers")
+
+                # Start blockchain sync if not started
+                if not self.__blockchain_sync_started:
+                    self.__start__sync_blockchain()
+
+                blockchain: Blockchain = self.get_blockchain()
+                if not blockchain.is_ready():
+                    if blockchain.get_height() >= self.__max_peer_start_height:
+                        self.__logger.info(
+                            f"Blockchain is up to date. Height: {blockchain.get_height()}")
+                        blockchain.set_ready()
 
             # TODO: Check if peer is alive
 
-            time.sleep(self.__peer_managing_rate)
+            time.sleep(self.__network_managing_rate)
 
     # @ Role._rpc  # type: ignore
     def broadcast_new_block(self, block, excludes=[]):
@@ -131,7 +152,7 @@ class Network(Role):
         self.__broadcast(message, excludes)
 
     def __broadcast(self, message, excludes=[]):
-        self.logger.info(
+        self.__logger.info(
             f"Broadcasting {message.command}, excludes: {excludes}")
 
         for peer in self.get_peers().values():
@@ -149,29 +170,41 @@ class Network(Role):
         sock.bind((self.__host, self.__port))
         sock.listen(self.__maxpeers)
 
-        self.logger.info(f"Listening on {self.__host}:{self.__port}")
+        self.__logger.info(f"Listening on {self.__host}:{self.__port}")
         return sock
 
     def __handle_message(self, host, data):
         message = NetworkEnvelope.parse(data)
-        self.logger.info(f"Recv: {message.command} from {host}")
+        if not message:
+            self.__logger.warning(f"Could not parse message from {host}")
+            return
+        self.__logger.info(f"Recv: {message.command} from {host}")
         if message.command in self.__handlers:
             self.__handlers[message.command](self, host, message.payload)
         else:
-            self.logger.info(f"Unknown command: {message.command}")
+            self.__logger.info(f"Unknown command: {message.command}")
 
     def __handle_peer(self, client_sock, addr):
         host, port = addr
-
         try:
-            data = client_sock.recv(1024)
+            # data = client_sock.recv(1024)
+            # if data:
+            #     self.__handle_message(host, data)
+
+            data = b''
+            while True:
+                buffer = client_sock.recv(1024)
+                if not buffer:
+                    break
+                data += buffer
+                if len(buffer) < 1024:
+                    break
             if data:
                 self.__handle_message(host, data)
-
         except KeyboardInterrupt:
             raise
         except:
-            self.logger.exception(f"Error handling peer {host}:{port}")
+            self.__logger.exception(f"Error handling peer {host}:{port}")
         client_sock.close()
 
     def add_peer(self, host, port) -> Peer:
@@ -179,20 +212,22 @@ class Network(Role):
         if host == self.get_host():
             raise ValueError("Cannot connect to self")
         peer = self.get_peer(host)
+        height = self.get_blockchain().get_height()
         if peer:
             if not peer.is_version_sent():
-                self.logger.debug(
+                self.__logger.debug(
                     f"Send version to added peer {host}:{port}")
-                peer.send_version(self.__id, self.__host, self.__port)
+                peer.send_version(self.__id, self.__host, self.__port, height)
         else:
             if len(self.__peers) == self.__maxpeers:
-                self.logger.warning("Reached max peers")
+                self.__logger.warning("Reached max peers")
                 return
             self.__peer_lock.acquire()
             peer = Peer(host, port)
             self.__peers[host] = peer
             self.__peer_lock.release()
-            peer.send_version(self.__id, self.__host, self.__port)
+            peer.send_version(self.__id, self.__host,
+                              self.__port, height=height)
 
         return self.__peers[host]
 
@@ -218,3 +253,36 @@ class Network(Role):
     def get_handshaked_peers(self):
         return [peer for peer in self.get_peers().values()
                 if peer.is_handshake_done()]
+
+    def set_max_peer_start_height(self, height):
+        '''Set the maximum height of peers during startup'''
+        if height > self.__max_peer_start_height:
+            self.__max_peer_start_height = height
+
+    def is_ready(self):
+        '''Check if the network is ready'''
+        return self.__is_ready
+
+    def set_ready(self):
+        '''Set the network ready status'''
+        self.__is_ready = True
+
+    def is_requested(self, item_hash: bytes):
+        '''Check if an item is requested'''
+        self.__item_lock.acquire()
+        result = item_hash in self.__requested_items
+        self.__item_lock.release()
+        return result
+
+    def add_requested(self, item_hash: bytes):
+        '''Add an item to requested items'''
+        self.__item_lock.acquire()
+        self.__requested_items.add(item_hash)
+        self.__item_lock.release()
+
+    def remove_requested(self, item_hash: bytes):
+        '''Remove an item from requested items'''
+        self.__item_lock.acquire()
+        if item_hash in self.__requested_items:
+            self.__requested_items.remove(item_hash)
+        self.__item_lock.release()

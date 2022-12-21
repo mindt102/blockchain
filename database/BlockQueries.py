@@ -21,12 +21,17 @@ def get_block_by_hash(block_hash: bytes, db=None) -> Block:
 
 
 @query_func
-def get_top_block(db=None) -> Block:
-    header, header_id, _ = get_header_by_maxheight(db=db)
+def get_top_block(db=None) -> tuple[Block, int]:
+    header, header_id, height = get_header_by_maxheight(db=db)
     if not header:
         raise Exception("No block in database")
     txs = get_txs_by_header(header_id)
-    return Block(transactions=txs, header=header)
+    return Block(transactions=txs, header=header), height
+
+
+@query_func
+def get_block_by_height(height: int, db=None) -> Block:
+    pass
 
 
 @query_func

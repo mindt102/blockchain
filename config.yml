@@ -4,13 +4,13 @@ blockchain:
   genesis_block_path: genesis_block.dat
 
 db:
-  name: bc.db
+  name: ./data/bc.db
   sample: db.json
-  debug: true
+  debug: false
   genesis_block_path: genesis_block.dat
 
 miner:
-  logging_rate: 100
+  logging_rate: 250
 
 network:
   max_peers: 10

@@ -29,7 +29,10 @@ class AddrMessage:
     @classmethod
     def handler(cls, network, host, payload):
         cls.__logger.info(f"Addr received from {host}")
-        peer = network.get_peer(host)
+        from network import Peer
+        peer: Peer = network.get_peer(host)
+        if not peer.is_active():
+            peer.send_version()
         if not (peer and peer.is_handshake_done()):
             cls.__logger.warning(
                 f"Received message from {host} before handshake")

@@ -58,6 +58,23 @@ def insert_txout(txout: TxOut, txid: int, index: int, db=None):
     return db.insert(__tableName, __tableCol, values)
 
 
+@query_func
+def get_utxo(addr: str, db=None) -> list[TxOut]:
+    query = f"""SELECT * 
+    FROM tx_outputs 
+    WHERE addr in ('9o9kCNjtdtfwF8gueroP6HMBF67PBjpjQ') 
+    EXCEPT 
+        SELECT txout.* 
+        FROM tx_outputs txout  
+        JOIN tx_inputs txin 
+        ON txout.id = txin.tx_output_id;
+    """  # , 'AtMa6huHpUv3uPPpwqjLV3YaHp8GGQWA5'
+    data = db.fetchAll(query)
+    if not data:
+        return []
+    return list(map(data_to_txout, data))
+
+
 def data_to_txout(data: tuple) -> TxOut:
     _, _, _, amount, locking_script, addr = data
     return TxOut(amount, Script.parse(locking_script)[0], addr)

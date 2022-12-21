@@ -6,8 +6,9 @@ import utils
 
 
 class Role(threading.Thread):
-    logger = utils.get_logger(__name__)
+    __logger = utils.get_logger(__name__)
     __roles = RoleContainer()
+    __run_event = threading.Event()
 
     def __init__(self, wallet=None, miner=None, blockchain=None, network=None):  # type: ignore
         self.q = queue.Queue()
@@ -20,6 +21,9 @@ class Role(threading.Thread):
             self.__roles.set_blockchain(blockchain)
         if network:
             self.__roles.set_network(network)
+
+        if not self.active():
+            self.__run_event.set()
         super().__init__()
 
     def _rpc(func):  # type: ignore
@@ -29,16 +33,27 @@ class Role(threading.Thread):
 
     @_rpc  # type: ignore
     def test(self, message: str = "test"):
-        self.logger.debug(message)
+        self.__logger.debug(message)
 
-    def get_wallet(self):
-        return self.__roles.get_wallet()
+    @classmethod
+    def get_wallet(cls):
+        return cls.__roles.get_wallet()
 
-    def get_miner(self):
-        return self.__roles.get_miner()
+    @classmethod
+    def get_miner(cls):
+        return cls.__roles.get_miner()
 
-    def get_blockchain(self):
-        return self.__roles.get_blockchain()
+    @classmethod
+    def get_blockchain(cls):
+        return cls.__roles.get_blockchain()
 
-    def get_network(self):
-        return self.__roles.get_network()
+    @classmethod
+    def get_network(cls):
+        return cls.__roles.get_network()
+
+    def active(self):
+        return self.__run_event.is_set()
+
+    @classmethod
+    def deactivate(cls):
+        cls.__run_event.clear()

@@ -1,5 +1,8 @@
+import math
 import utils
+from blockchain import Blockchain
 from datastructure import VarInt
+from Miner import Miner
 from protocols.GetDataMessage import GetDataMessage
 from protocols.InvItem import InvItem
 
@@ -13,13 +16,13 @@ class InvMessage:
         self.__count = VarInt(len(items))
 
     def serialize(self) -> bytes:
-        return self.__count.value + b''.join([item.serialize() for item in self.__items])
+        return self.__count.serialize() + b''.join([item.serialize() for item in self.__items])
 
     @classmethod
     def parse(cls, stream: bytes) -> tuple['InvMessage', bytes]:
         count, stream = VarInt.parse(stream)
         items = []
-        for _ in range(count.__value):
+        for _ in range(count.get_value()):
             item, stream = InvItem.parse(stream)
             items.append(item)
         return cls(items), stream
@@ -38,29 +41,54 @@ class InvMessage:
                 f"Received inv message from {host} before handshake")
             return
         inv, _ = cls.parse(payload)
+        cls.__logger.info(inv)
         filtered_items = []
-        miner = network.get_miner()
-        blockchain = network.get_blockchain()
+        miner: Miner = network.get_miner()
+        blockchain: Blockchain = network.get_blockchain()
+
+        # Filter out items that are already in mempool or blockchain
         for item in inv.get_items():
+            if network.is_requested(item.get_hash()):
+                continue
             if item.get_type() == InvItem.MSG_TX:  # Transaction
-                # Check if transaction is in mempool or in blockchain
+                #         # Check if transaction is in mempool or in blockchain
                 tx = miner.get_tx_by_hash(
                     item.get_hash()) or blockchain.get_tx_by_hash(item.get_hash())
                 if tx:
                     continue
 
-                filtered_items.append(item)
             elif item.get_type() == InvItem.MSG_BLOCK:  # Block
                 # Check if blockchain already has the block
-                block = blockchain.get_block_by_hash(item.get_hash())
-                if block:
+                header = blockchain.get_header_by_hash(item.get_hash())
+                if header:
                     continue
-                filtered_items.append(item)
 
-                # TODO: Remove this
-                miner.receive_new_block()
             else:
                 cls.__logger.warning(
                     f"Received inv message with unknown type {item.type}")
-        getdata = GetDataMessage(filtered_items)
-        peer.send(getdata)
+                continue
+            filtered_items.append(item)
+            network.add_requested(item.get_hash())
+
+        if not filtered_items:
+            cls.__logger.debug("No new items to request")
+            return
+
+        if len(filtered_items) == 1:
+            getdata = GetDataMessage(filtered_items)
+            peer.send(getdata)
+        else:
+            # Split filtered items into multiple getdata messages
+            from network import Peer
+            peers: Peer = network.get_peers()
+            peer_count = len(peers)
+            chunk_size = math.ceil(len(filtered_items) // peer_count)
+
+            for i, receiver in enumerate(peers.values()):
+                start = i * chunk_size
+                end = min((i + 1) * chunk_size, len(filtered_items))
+                data = filtered_items[start:end]
+                getdata = GetDataMessage(data)
+                cls.__logger.debug(
+                    f"#{i} Sending {getdata} to {receiver.get_host()}: {receiver.get_port()}")
+                receiver.send(getdata)

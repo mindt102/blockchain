@@ -1,60 +1,76 @@
 import os
+import threading
+import time
 
 from ellipticcurve.ecdsa import Ecdsa
 from ellipticcurve.privateKey import PrivateKey
+from ellipticcurve.publicKey import PublicKey
 
 import utils
 from blockchain import Blockchain, Script, Transaction, TxIn, TxOut
 from Role import Role
 from utils import encode_base58check, hash160
 
+from flask import Flask, request, jsonify
+
 
 class Wallet(Role):
     '''Provide wallet functionality'''
-    logger = utils.get_logger(__name__)
+    __logger = utils.get_logger(__name__)
+    __app = Flask(__name__)
 
-    def __init__(self):
-        self.wallet = self
-        self.__privkey_file = "privkey.pem"
+    __privkey_file = "privkey.pem"
+
+    __privkey: PrivateKey = None
+    __pubkey: PublicKey = None
+    __addr: str = None
+
+    def __init__(self, *args, **kwargs):
+        # self.wallet = self
+        # self.__privkey_file = "privkey.pem"
         self.__init_privkey()
-        self.__pubkey = self.__privkey.publicKey()
         self.__init_addr()
-        super().__init__(wallet=self)
+        # super().__init__(wallet=self, *args, **kwargs)
 
-    def __init_privkey(self):
+    @classmethod
+    def __init_privkey(cls):
         '''
         Initialize private key
         Create a new private key if one does not exist
         Else load the existing private key
         '''
-        if os.path.exists(self.__privkey_file):
-            with open(self.__privkey_file, "r") as f:
-                self.__privkey = PrivateKey.fromPem(f.read())
+        if os.path.exists(cls.__privkey_file):
+            with open(cls.__privkey_file, "r") as f:
+                cls.__privkey = PrivateKey.fromPem(f.read())
         else:
-            self.__privkey = self.generate_privkey()
-            with open(self.__privkey_file, "w") as f:
-                f.write(self.__privkey.toPem())
+            cls.__privkey = cls.generate_privkey()
+            with open(cls.__privkey_file, "w") as f:
+                f.write(cls.__privkey.toPem())
 
-    def __init_addr(self):
+    @classmethod
+    def __init_addr(cls):
         '''
         Generate address from public key
         '''
-        pubkey = self.__pubkey.toCompressed().encode()
+        cls.__pubkey = cls.__privkey.publicKey()
+        pubkey = cls.__pubkey.toCompressed().encode()
         pubkeyhash = hash160(pubkey)
-        self.__addr = encode_base58check(pubkeyhash)
+        cls.__addr = encode_base58check(pubkeyhash)
 
-    def get_privkey(self):
-        return self.__privkey
+    @classmethod
+    def get_privkey(cls):
+        return cls.__privkey
 
-    def get_pubkey(self):
-        return self.__pubkey
+    @classmethod
+    def get_pubkey(cls):
+        return cls.__pubkey
 
-    def get_addr(self):
-        return self.__addr
+    @classmethod
+    def get_addr(cls):
+        return cls.__addr
 
     def create_transaction(self, to_addr: str, amount: int):
         '''Create a transaction to send coins to another address'''
-        # TODO: IMPLEMENT @Trang
         blockchain: Blockchain = self.get_blockchain()
         utxo_sets = blockchain.get_UTXO_set()
         selected_utxo = self.select_utxo(amount, utxo_sets)
@@ -87,10 +103,9 @@ class Wallet(Role):
         unlocking_script = Script.get_unlock(signature, pubkey)
         tx.set_unlocking_script(unlocking_script)
 
-    def select_utxo(self, amount: int, utxo_set: dict[tuple[bytes, int], TxOut]) -> dict[tuple[bytes, int], TxOut]:
+    @classmethod
+    def select_utxo(cls, amount: int, utxo_set: dict[tuple[bytes, int], TxOut]) -> dict[tuple[bytes, int], TxOut]:
         '''Select UTXO to spend. utxo_set is a dict with key: (prev_hash, output_index) and value: TxOut'''
-        # TODO: IMPLEMENT @Trang
-        # ... ht is doing
         total = 0
         selected_utxo = dict()
 
@@ -101,3 +116,20 @@ class Wallet(Role):
             if total >= amount:
                 return selected_utxo
         raise ValueError(f"Not enough coin. Current balance: {total}")
+
+    def run(self):
+        '''Run the wallet'''
+        self.__logger.info("Wallet is listening on port http://localhost:8000")
+        self.__start_app()
+        while self.active():
+            time.sleep(.1)
+
+    def __start_app(self):
+        self.__api_thread = threading.Thread(target=self.__app.run, kwargs={
+                                             "host": "127.0.0.1", "port": 8000})
+        self.__api_thread.setDaemon(True)
+        self.__api_thread.start()
+
+    @__app.route('/', methods=['GET'])
+    def test(self=None):
+        return "Test Wallet"

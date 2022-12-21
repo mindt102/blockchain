@@ -4,3 +4,4 @@ __pycache__/
 draft.py
 privkey.pem
 tempCodeRunnerFile.py
+*.db

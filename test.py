@@ -34,7 +34,7 @@ def compute_merkle_root(transactions: list[Transaction]) -> bytes:
     #    transactions (list[Transaction]): list of transactions
     #Returns:
     #    bytes: merkle root
-    if len(transactions) != 1:
+    if len(transactions) == 1:
         merkle_root = hash256(transactions[0].serialize())
     else:
         # TODO: Edit this to compute the merkle root
@@ -42,14 +42,14 @@ def compute_merkle_root(transactions: list[Transaction]) -> bytes:
         for _ in range(len(transactions)):
             hash_transac = transactions[_].get_hash()
             hex_hashes.append(hash_transac.hex())
-        if len(transactions) % 2 == 1:
-                last_hash_transac = transactions[-1].get_hash()
-                hex_hashes.append(last_hash_transac.hex())
         Merkle_tree = []
-        #while len(hex_hashes) >= 2:
-        for i in range(0, len(hex_hashes), 2):
-            Merkle_tree.append(merkle_parent(hex_hashes[i], hex_hashes[i+1]))
-        merkle_root = Merkle_tree[0]
+        while len(hex_hashes) > 1:
+            if len(hex_hashes) % 2 == 1:
+                hex_hashes.append(hex_hashes[-1])
+            hex_hashes = [merkle_parent(a, b) for (a,b) in zip(hex_hashes[0::2], hex_hashes[1::2])]
+        #for i in range(0, len(hex_hashes), 2):
+        #    Merkle_tree.append(merkle_parent(hex_hashes[i], hex_hashes[i+1]))
+        merkle_root = hex_hashes[0]
         pass
     return merkle_root
 

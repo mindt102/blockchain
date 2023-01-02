@@ -1,5 +1,5 @@
 import utils
-from blockchain import Block, Blockchain
+from blockchain import Block, Blockchain, blockchain
 
 
 class BlockMessage():
@@ -32,8 +32,8 @@ class BlockMessage():
             return
         blockmsg, _ = cls.parse(payload)
         block = blockmsg.get_block()
-        blockchain: Blockchain = network.get_blockchain()
+        # blockchain: Blockchain = network.get_blockchain()
         blockchain.receive_new_block(block, sender=host)
-        cls.__logger.debug(
-            f"Sending block ===>{block.get_header().get_hash().hex()[-4:]}<=== to blockchain")
+        # cls.__logger.debug(
+        #     f"Sending block ===>{block.get_header().get_hash().hex()[-4:]}<=== to blockchain")
         network.remove_requested(block.get_header().get_hash())

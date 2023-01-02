@@ -1,6 +1,6 @@
 from ellipticcurve.ecdsa import Ecdsa
 
-from blockchain import Script
+from blockchain.Script import Script
 from blockchain.TxIn import TxIn
 from blockchain.TxOut import TxOut
 # import database
@@ -15,6 +15,7 @@ class Transaction:
 
     def to_json(self) -> dict:
         return {
+            'hash': self.get_hash().hex(),
             'inputs': [txin.to_json() for txin in self.__inputs],
             'outputs': [txout.to_json() for txout in self.__outputs]
         }
@@ -22,16 +23,12 @@ class Transaction:
     def __repr__(self) -> str:
         return f'''Transaction({self.to_json()})'''
 
-    def sign(self, priv_key) -> None:
-        empty_inputs = [txin.get_empty_copy() for txin in self.__inputs]
-        empty_tx = Transaction(empty_inputs, self.__outputs)
-        signature = Ecdsa.sign(encode_base58(
-            hash256(empty_tx.serialize())), priv_key)
-        return signature.toDer()
-
     def set_unlocking_script(self, unlocking_script: Script) -> None:
         for txin in self.__inputs:
             txin.set_unlocking_script(unlocking_script)
+
+    def get_unlocking_script(self) -> Script:
+        return self.__inputs[0].get_unlocking_script()
 
     def serialize(self) -> bytes:
         inputs_bytes = b''.join([txin.serialize() for txin in self.__inputs])
@@ -58,6 +55,7 @@ class Transaction:
         return cls(inputs, outputs), stream
 
     def get_hash(self) -> bytes:
+        # empty_tx = self.get_empty_copy()
         return hash256(self.serialize())
 
     def get_outputs(self) -> list[TxOut]:
@@ -75,6 +73,11 @@ class Transaction:
     # def get_prev_tx(self) -> TxIn:
     #     tx = self.__inputs
     #     return tx[0].get_prev_hash()
+
+    def sign(self, privkey, pubkey) -> None:
+        signature = Ecdsa.sign(self.get_signing_data(), privkey).toDer()
+        pubkey = pubkey.toCompressed().encode()
+        self.set_unlocking_script(Script([signature, pubkey]))
 
     def get_signing_data(self) -> bytes:
         empty_tx = self.get_empty_copy()
@@ -95,19 +98,3 @@ class Transaction:
             return False
 
         return True
-
-    # __tableName = "transactions"
-    # __tableCol = ["block_header_id", "tx_hash"]
-
-    # def insert(self, blockHeaderId: int):
-    #     values = (blockHeaderId, self.get_hash())
-    #     __db = DatabaseController()
-    #     txId = __db.insert(self.__tableName, self.__tableCol, values)
-    #     for idx, txOut in enumerate(self.get_outputs()):
-    #         # txOut.insert(txId, idx)
-    #         database.insert_txout(txout=txOut, txid=txId, index=idx, db=__db)
-
-    #     for idx, txIn in enumerate(self.get_inputs()):
-    #         if not self.is_coinbase():
-    #             txIn.insert()
-    #             database.insert_txin(txin=txIn, db=__db)

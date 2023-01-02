@@ -1,4 +1,4 @@
-from blockchain import Blockchain
+from blockchain import Blockchain, blockchain
 from protocols import InvItem, InvMessage
 import utils
 from datastructure import VarInt
@@ -39,7 +39,7 @@ class GetBlocksMessage:
             return
         getblocks, _ = cls.parse(payload)
 
-        blockchain: Blockchain = network.get_blockchain()
+        # blockchain: Blockchain = network.get_blockchain()
         block_locator_hashes = getblocks.get_block_locator_hashes()
         common_block_hash = blockchain.locate_common_block_hash(
             block_locator_hashes)

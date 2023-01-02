@@ -1,6 +1,6 @@
 
 from datastructure import VarInt
-from blockchain.operation import *
+from blockchain.opcode import *
 import utils
 
 
@@ -15,10 +15,18 @@ class Script:
 
     @classmethod
     def get_lock(cls, addr: str) -> 'Script':
+        """
+        ScriptPubKey = OP_DUP + OP_HASH160 + PubKeyHash + OP_EQUALVERIFY + OP_CHECKSIG
+        Stored in txout
+        """
         return cls([b'\x76', b'\xa9', utils.decode_base58check(addr), b'\x88', b'\xac'])
 
     @ classmethod
     def get_unlock(cls, signature: bytes, pubkey: bytes) -> 'Script':
+        """
+        ScriptSig = Signature + PubKey
+        Stored in txin
+        """
         return cls([signature, pubkey])
 
     def evaluate(self, z) -> bool:

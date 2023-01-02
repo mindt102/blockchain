@@ -2,7 +2,7 @@ from blockchain.Script import Script
 from blockchain.TxIn import TxIn
 from blockchain.TxOut import TxOut
 from database.DatabaseController import query_func
-from database.TxOutTable import get_txout_by_id, get_txout_by_tx, get_txout_id
+from database.txout_queries import get_txout_by_id, get_txout_by_tx, get_txout_id
 from utils import get_logger
 
 __tableName = "tx_inputs"
@@ -16,9 +16,9 @@ __logger = get_logger(__name__)
 
 
 @query_func
-def insert_txin(txin: TxIn, txid: int, index: int, db=None):
-    if index > 0:
-        txout_id = get_txout_id(txid, txin.get_output_index())
+def insert_txin(txin: TxIn, txid: int, index: int, prev_tx_id: int, is_coinbase: bool = False, db=None):
+    if not is_coinbase:
+        txout_id = get_txout_id(prev_tx_id, txin.get_output_index())
         if not txout_id:
             __logger.debug("Transaction output not found")
     else:
@@ -53,9 +53,10 @@ def data_to_txin(data: tuple) -> TxIn:
         output_index = 0xffffffff
         return TxIn(prev_tx_hash, output_index, unlocking_script)
 
-    txout: TxOut = get_txout_by_id(txout_id)
+    txout, tx_id, output_index = get_txout_by_id(txout_id)
     if not txout:
         raise Exception("Transaction output not found")
-    prev_tx_hash = txout.get_tx_hash()
-    output_index = txout.get_index()
+    from database.transaction_queries import get_txhash_by_id
+    prev_tx_hash = get_txhash_by_id(tx_id)
+    # output_index = txout.get_index()
     return TxIn(prev_tx_hash, output_index, unlocking_script)

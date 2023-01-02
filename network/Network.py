@@ -4,11 +4,12 @@ import select
 import socket
 import threading
 import time
-from blockchain import Blockchain
+from blockchain import blockchain
+import database
 
 import utils
 from network import NetworkAddress, NetworkEnvelope, Peer
-from protocols import AddrMessage, BlockMessage, GetBlocksMessage, InvItem, messages
+from protocols import AddrMessage, BlockMessage, GetBlocksMessage, InvItem, TransactionMessage, messages
 from Role import Role
 
 
@@ -73,7 +74,7 @@ class Network(Role):
 
     # @Role._rpc  # type: ignore
     def __start_network_manager(self):
-        threading.Thread(target=self.__manage_network).start()
+        threading.Thread(target=self.__manage_network, daemon=True).start()
 
     def __discover_known_nodes(self, known_nodes):
         for known_node in known_nodes:
@@ -98,7 +99,7 @@ class Network(Role):
                     f"Could not connect to {host}:{port}")
 
     def __start__sync_blockchain(self):
-        blockchain: Blockchain = self.get_blockchain()
+        # from blockchain import blockchain
         block_locator_hashes = blockchain.get_block_locator_hashes()
         getblocks_msg = GetBlocksMessage(block_locator_hashes)
         self.broadcast(getblocks_msg)
@@ -123,11 +124,12 @@ class Network(Role):
                 if not self.__blockchain_sync_started:
                     self.__start__sync_blockchain()
 
-                blockchain: Blockchain = self.get_blockchain()
+                # blockchain: Blockchain = self.get_blockchain()
                 if not blockchain.is_ready():
-                    if blockchain.get_height() >= self.__max_peer_start_height:
+                    height = database.get_max_height()
+                    if height >= self.__max_peer_start_height:
                         self.__logger.info(
-                            f"Blockchain is up to date. Height: {blockchain.get_height()}")
+                            f"Blockchain is up to date. Height: {height}")
                         blockchain.set_ready()
 
             # TODO: Check if peer is alive
@@ -139,6 +141,11 @@ class Network(Role):
         '''Broadcast a new block to all peers'''
         blockmsg = BlockMessage(block)
         self.__broadcast(blockmsg, excludes)
+
+    def broadcast_new_tx(self, tx, excludes=[]):
+        '''Broadcast a new transaction to all peers'''
+        txmsg = TransactionMessage(tx)
+        self.__broadcast(txmsg, excludes)
 
     # @ Role._rpc  # type: ignore
     def broadcast_addr(self):
@@ -192,7 +199,7 @@ class Network(Role):
             #     self.__handle_message(host, data)
 
             data = b''
-            while True:
+            while self.active():
                 buffer = client_sock.recv(1024)
                 if not buffer:
                     break
@@ -212,7 +219,8 @@ class Network(Role):
         if host == self.get_host():
             raise ValueError("Cannot connect to self")
         peer = self.get_peer(host)
-        height = self.get_blockchain().get_height()
+        # height = self.get_blockchain().get_height()
+        height = database.get_max_height()
         if peer:
             if not peer.is_version_sent():
                 self.__logger.debug(

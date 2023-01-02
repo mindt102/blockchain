@@ -6,6 +6,7 @@ from protocols.InvMessage import InvMessage
 from protocols.VerAckMessage import VerAckMessage
 from protocols.VersionMessage import VersionMessage
 from protocols.GetBlocksMessage import GetBlocksMessage
+from protocols.TransactionMessage import TransactionMessage
 
 messages = [
     VersionMessage,
@@ -15,4 +16,5 @@ messages = [
     BlockMessage,
     AddrMessage,
     GetBlocksMessage,
+    TransactionMessage
 ]

@@ -17,6 +17,7 @@ class BlockHeader:
         if not nonce:
             nonce = 10000 * random.randint(10, 100)
         self.__nonce = nonce
+        self.__height = None
 
     def get_hash(self) -> bytes:
         return hash256(self.serialize())
@@ -42,12 +43,19 @@ class BlockHeader:
     def get_merkle_root(self) -> bytes:
         return self.__merkle_root
 
+    def set_height(self, height: int) -> None:
+        self.__height = height
+
+    def get_height(self) -> int:
+        return self.__height
+
     def to_json(self) -> dict:
         return {
+            'height': self.get_height(),
             'prev_block_hash': self.__prev_block_hash.hex(),
             'merkle_root': self.__merkle_root.hex(),
             'timestamp': self.__timestamp,
-            'bits': self.__bits,
+            'bits': hex(self.get_bits()),
             'nonce': self.__nonce,
             'hash': self.get_hash().hex()
         }

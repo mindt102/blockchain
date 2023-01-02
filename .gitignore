@@ -5,3 +5,5 @@ draft.py
 privkey.pem
 tempCodeRunnerFile.py
 *.db
+secrets/*
+test.py

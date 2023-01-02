@@ -1,8 +1,10 @@
 import math
+
 import utils
-from blockchain import Blockchain
+from blockchain import Blockchain, blockchain
+from database import get_header_by_hash
 from datastructure import VarInt
-from Miner import Miner
+from Miner import Miner, miner
 from protocols.GetDataMessage import GetDataMessage
 from protocols.InvItem import InvItem
 
@@ -43,8 +45,8 @@ class InvMessage:
         inv, _ = cls.parse(payload)
         cls.__logger.info(inv)
         filtered_items = []
-        miner: Miner = network.get_miner()
-        blockchain: Blockchain = network.get_blockchain()
+        # miner: Miner = network.get_miner()
+        # blockchain: Blockchain = network.get_blockchain()
 
         # Filter out items that are already in mempool or blockchain
         for item in inv.get_items():
@@ -59,7 +61,8 @@ class InvMessage:
 
             elif item.get_type() == InvItem.MSG_BLOCK:  # Block
                 # Check if blockchain already has the block
-                header = blockchain.get_header_by_hash(item.get_hash())
+                # header = blockchain.get_header_by_hash(item.get_hash())
+                header, _, _ = get_header_by_hash(item.get_hash())
                 if header:
                     continue
 
@@ -82,7 +85,7 @@ class InvMessage:
             from network import Peer
             peers: Peer = network.get_peers()
             peer_count = len(peers)
-            chunk_size = math.ceil(len(filtered_items) // peer_count)
+            chunk_size = math.ceil(len(filtered_items) / peer_count)
 
             for i, receiver in enumerate(peers.values()):
                 start = i * chunk_size

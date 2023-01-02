@@ -23,7 +23,7 @@ class TxOut:
     def to_json(self) -> dict:
         return {
             'amount': self.__amount,
-            'locking_script': self.__locking_script.to_json(),
+            'locking_script': self.__locking_script.serialize().hex(),
             'addr': self.__addr
         }
 

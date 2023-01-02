@@ -22,7 +22,9 @@ def data_to_header(data: tuple) -> tuple[BlockHeader, int, int]:
         tuple[BlockHeader, int, int]: (header, header_id, height)
     '''
     header_id, prev_block_hash, _, merkle_root, timestamp, nonce, bits, height = data
-    return BlockHeader(prev_block_hash, merkle_root, bits, nonce, timestamp), header_id, height
+    header = BlockHeader(prev_block_hash, merkle_root, bits, nonce, timestamp)
+    header.set_height(height)
+    return header, header_id, height
 
 
 @query_func
@@ -34,11 +36,11 @@ def get_max_height(db=None) -> int:
 
 
 @query_func
-def get_header_by_maxheight(db=None) -> tuple[BlockHeader, int, int]:
+def get_top_header(db=None) -> tuple[BlockHeader, int, int]:
     '''
     Get the header with the highest height
     Returns:
-        tuple[int, BlockHeader]: (header_id, header)
+        tuple[BlockHeader, int, int]: (header, header_id, height)
     '''
     max_height = get_max_height(db=db)
     return get_header_by_height(max_height, max_height=max_height, db=db)
@@ -70,8 +72,9 @@ def get_header_by_height(height: int, max_height=0, db=None) -> tuple[BlockHeade
                 return data_to_header(data)
 
 
-@ query_func
+@query_func
 def insert_header(header: BlockHeader, height, db=None):
+    header.set_height(height)
     values = (
         header.get_prev_block_hash(),
         header.get_hash(),
@@ -79,12 +82,12 @@ def insert_header(header: BlockHeader, height, db=None):
         header.get_timestamp(),
         header.get_nonce(),
         header.get_bits(),
-        height
+        header.get_height()
     )
     return db.insert(__table_name, __table_col, values)
 
 
-@ query_func
+@query_func
 def get_header_by_hash(header_hash: bytes, db: DatabaseController = None) -> tuple[BlockHeader, int, int]:
     '''
     Get the header based on the hash
@@ -96,3 +99,26 @@ def get_header_by_hash(header_hash: bytes, db: DatabaseController = None) -> tup
     if not header_data:
         return None, None, None
     return data_to_header(header_data)
+
+
+@query_func
+def get_height_by_id(header_id: int, db: DatabaseController = None) -> int:
+    '''
+    Get the height of the header based on the id
+    Returns:
+        int: height
+    '''
+    res = db.fetchOne(
+        f"SELECT height FROM {__table_name} WHERE id = ?", (header_id,))
+    if res:
+        return res[0]
+    return None
+
+
+@query_func
+def get_bits_by_height(block_height, db=None):
+    res = db.fetchOne(
+        f"SELECT bits FROM {__table_name} WHERE height = ?", (block_height,))
+    if res:
+        return res[0]
+    return None

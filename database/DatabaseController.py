@@ -1,9 +1,9 @@
 import json
 import os
 import sqlite3
+
 import yaml
 
-from database.GenerateQuery import GenerateQuery
 import utils
 
 
@@ -45,21 +45,6 @@ class DatabaseController:
     def insert(self, tableName, tableCol, values):
         return self.execute(
             f'INSERT INTO {tableName} ({",".join(tableCol)}) VALUES ({"?,"*(len(values)-1)}?)', values)
-
-
-def create_db(config: dict):
-    db_file = config["name"]
-    if os.path.exists(db_file) and not config["debug"]:
-        return
-    if os.path.exists(db_file):
-        os.remove(db_file)
-    db = DatabaseController()
-    with open(config["sample"]) as f:
-        tables_config = json.loads(f.read())
-        create_queries = map(
-            lambda conf: GenerateQuery(**conf), tables_config)
-        for query in create_queries:
-            db.execute(str(query))
 
 
 def query_func(func):

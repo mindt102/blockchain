@@ -18,7 +18,7 @@ class TxIn:
         return {
             'prev_tx': self.__prev_tx_hash.hex(),
             'output_index': self.__output_index,
-            'unlocking_script': self.__unlocking_script.to_json()
+            'unlocking_script': self.__unlocking_script.serialize().hex()
         }
 
     def __repr__(self) -> str:

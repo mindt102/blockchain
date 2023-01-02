@@ -52,5 +52,5 @@ def decode_base58check(s: str) -> bytes:
     checksum = result[-4:]
     if hash256(result[:-4])[:4] != checksum:
         raise RuntimeError('bad address: {} {}'.format(
-            checksum, hash256(result[:-4])[:4]))
+            checksum.hex(), hash256(result[:-4])[:4].hex()))
     return result[:-4]

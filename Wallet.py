@@ -5,19 +5,20 @@ import time
 from ellipticcurve.ecdsa import Ecdsa
 from ellipticcurve.privateKey import PrivateKey
 from ellipticcurve.publicKey import PublicKey
+import database
 
 import utils
-from blockchain import Blockchain, Script, Transaction, TxIn, TxOut
+from blockchain import Script, Transaction, TxIn, TxOut
 from Role import Role
 from utils import encode_base58check, hash160
 
-from flask import Flask, request, jsonify
+# from api import app
+from utils.hashing import decode_base58check
 
 
 class Wallet(Role):
     '''Provide wallet functionality'''
     __logger = utils.get_logger(__name__)
-    __app = Flask(__name__)
 
     __privkey_file = "privkey.pem"
 
@@ -31,6 +32,7 @@ class Wallet(Role):
         self.__init_privkey()
         self.__init_addr()
         # super().__init__(wallet=self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def __init_privkey(cls):
@@ -69,11 +71,22 @@ class Wallet(Role):
     def get_addr(cls):
         return cls.__addr
 
-    def create_transaction(self, to_addr: str, amount: int):
+    @classmethod
+    def generate_privkey(cls):
+        return PrivateKey()
+
+    @classmethod
+    def create_transaction(cls, to_addr: str, amount: int):
         '''Create a transaction to send coins to another address'''
-        blockchain: Blockchain = self.get_blockchain()
-        utxo_sets = blockchain.get_UTXO_set()
-        selected_utxo = self.select_utxo(amount, utxo_sets)
+        # blockchain: Blockchain = cls.get_blockchain()
+        # utxo_sets = blockchain.get_UTXO_set()
+        try:
+            decode_base58check(to_addr)
+        except:
+            cls.__logger.exception(f"Invalid address: {to_addr}")
+            raise
+        utxo_sets = database.get_utxo()
+        selected_utxo = cls.select_utxo(amount, utxo_sets)
         inputs: list[TxIn] = []
         total_input = 0
         for key, utxo in selected_utxo.items():
@@ -83,23 +96,20 @@ class Wallet(Role):
             total_input += utxo.get_amount()
         change = total_input - amount
         assert change >= 0
-        change_output = TxOut(change, addr=self.get_addr())
+        change_output = TxOut(change, addr=cls.get_addr())
         spending_output = TxOut(amount, addr=to_addr)
         outputs: list[TxOut] = [change_output, spending_output]
 
         tx = Transaction(inputs, outputs)
-        self.sign_transaction(tx)
+        cls.sign_transaction(tx)
         return tx
 
     @classmethod
-    def generate_privkey(cls):
-        return PrivateKey()
-
-    def sign_transaction(self, tx: Transaction):
+    def sign_transaction(cls, tx: Transaction):
         '''Sign a transaction'''
         signature = Ecdsa.sign(tx.get_signing_data(),
-                               self.get_privkey()).toDer()
-        pubkey = self.get_pubkey().toCompressed().encode()
+                               cls.get_privkey()).toDer()
+        pubkey = cls.get_pubkey().toCompressed().encode()
         unlocking_script = Script.get_unlock(signature, pubkey)
         tx.set_unlocking_script(unlocking_script)
 
@@ -119,17 +129,14 @@ class Wallet(Role):
 
     def run(self):
         '''Run the wallet'''
-        self.__logger.info("Wallet is listening on port http://localhost:8000")
+        self.__logger.info("Wallet is listening on port http://localhost:5000")
         self.__start_app()
         while self.active():
             time.sleep(.1)
 
     def __start_app(self):
-        self.__api_thread = threading.Thread(target=self.__app.run, kwargs={
-                                             "host": "127.0.0.1", "port": 8000})
+        self.__api_thread = threading.Thread(target=lambda: app.run(
+            host="127.0.0.1", port=5000, debug=True, use_reloader=False
+        ))
         self.__api_thread.setDaemon(True)
         self.__api_thread.start()
-
-    @__app.route('/', methods=['GET'])
-    def test(self=None):
-        return "Test Wallet"

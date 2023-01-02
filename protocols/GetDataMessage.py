@@ -1,8 +1,9 @@
 import utils
-from blockchain import Blockchain
+from blockchain import Blockchain, blockchain
 from datastructure import VarInt
 from protocols.BlockMessage import BlockMessage
 from protocols.InvItem import InvItem
+from database import get_block_by_hash
 
 
 class GetDataMessage:
@@ -46,8 +47,9 @@ class GetDataMessage:
                 pass
             elif item.get_type() == InvItem.MSG_BLOCK:
                 block_hash = item.get_hash()
-                blockchain: Blockchain = network.get_blockchain()
-                block = blockchain.get_block_by_hash(block_hash)
+                # blockchain: Blockchain = network.get_blockchain()
+                # block = blockchain.get_block_by_hash(block_hash)
+                block = get_block_by_hash(block_hash)
                 if block:
                     blockmsg = BlockMessage(block)
                     peer.send(blockmsg)

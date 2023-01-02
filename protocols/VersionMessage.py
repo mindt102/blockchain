@@ -1,5 +1,6 @@
 import time
 import random
+import database
 import utils
 from protocols.VerAckMessage import VerAckMessage
 from network import NetworkAddress
@@ -78,7 +79,8 @@ class VersionMessage():
             peer.received_version()
             peer.send(VerAckMessage())
             if not peer.is_version_sent():
-                height = network.get_blockchain().get_height()
+                # height = network.get_blockchain().get_height()
+                height = database.get_max_height()
                 peer.send_version(network.get_id(),
                                   network.get_host(), network.get_port(), height)
 

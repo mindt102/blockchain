@@ -5,4 +5,15 @@ services:
     build: .
     image: ucoin
     deploy:
-      replicas: 3
+      replicas: 4
+    
+  node:
+    image: ucoin
+    container_name: unode
+    ports:
+      - 5000:5000
+    volumes:
+      - ./data:/usr/src/app/data
+      - ./secrets:/usr/src/app/secrets
+    # profiles:
+    #   - donotstart

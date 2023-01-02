@@ -1,5 +1,5 @@
 **/__pycache__/
-secrets/
+secrets/*
 archive/
 .venv/
 .env
@@ -8,3 +8,4 @@ archive/
 privkey.pem
 draft.py
 tempCodeRunnerFile.py
+test.py

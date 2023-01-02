@@ -1,8 +1,11 @@
 from ellipticcurve.ecdsa import Ecdsa
-from blockchain import Script
+
+from blockchain.Script import Script
 from blockchain.TxIn import TxIn
 from blockchain.TxOut import TxOut
-from utils import hash256, encode_base58
+# import database
+# from database.DatabaseController import DatabaseController
+from utils import encode_base58, hash256
 
 
 class Transaction:
@@ -10,22 +13,22 @@ class Transaction:
         self.__inputs = inputs
         self.__outputs = outputs
 
-    def __repr__(self) -> str:
-        return f'''Transaction(
-    inputs={self.__inputs}, 
-    outputs={self.__outputs}
-)'''
+    def to_json(self) -> dict:
+        return {
+            'hash': self.get_hash().hex(),
+            'inputs': [txin.to_json() for txin in self.__inputs],
+            'outputs': [txout.to_json() for txout in self.__outputs]
+        }
 
-    def sign(self, priv_key) -> None:
-        empty_inputs = [txin.get_empty_copy() for txin in self.__inputs]
-        empty_tx = Transaction(empty_inputs, self.__outputs)
-        signature = Ecdsa.sign(encode_base58(
-            hash256(empty_tx.serialize())), priv_key)
-        return signature.toDer()
+    def __repr__(self) -> str:
+        return f'''Transaction({self.to_json()})'''
 
     def set_unlocking_script(self, unlocking_script: Script) -> None:
         for txin in self.__inputs:
             txin.set_unlocking_script(unlocking_script)
+
+    def get_unlocking_script(self) -> Script:
+        return self.__inputs[0].get_unlocking_script()
 
     def serialize(self) -> bytes:
         inputs_bytes = b''.join([txin.serialize() for txin in self.__inputs])
@@ -52,6 +55,7 @@ class Transaction:
         return cls(inputs, outputs), stream
 
     def get_hash(self) -> bytes:
+        # empty_tx = self.get_empty_copy()
         return hash256(self.serialize())
 
     def get_outputs(self) -> list[TxOut]:
@@ -70,6 +74,11 @@ class Transaction:
     #     tx = self.__inputs
     #     return tx[0].get_prev_hash()
 
+    def sign(self, privkey, pubkey) -> None:
+        signature = Ecdsa.sign(self.get_signing_data(), privkey).toDer()
+        pubkey = pubkey.toCompressed().encode()
+        self.set_unlocking_script(Script([signature, pubkey]))
+
     def get_signing_data(self) -> bytes:
         empty_tx = self.get_empty_copy()
         return encode_base58(
@@ -80,9 +89,9 @@ class Transaction:
         # tx = block.get_transactions()
         if len(inputs) != 1:
             return False
-        
+
         first_input = inputs[0]
-        prev_tx = first_input.get_prev_tx()
+        prev_tx = first_input.get_prev_tx_hash()
         output_index = first_input.get_output_index()
 
         if prev_tx != b'\x00' * 32 or output_index != 0xffffffff:

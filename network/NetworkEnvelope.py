@@ -1,9 +1,14 @@
 import struct
 import hashlib
 
+import utils
+
 NETWORK_MAGIC = b'\xf9\xbe\xb4\xd9'
 
+
 class NetworkEnvelope:
+    __logger = utils.get_logger(__name__)
+
     def __init__(self, command, payload):
         self.command = command
         self.payload = payload
@@ -20,7 +25,9 @@ class NetworkEnvelope:
         checksum = data[20:24]
         payload = data[24:24+length]
         if checksum != hashlib.sha256(hashlib.sha256(payload).digest()).digest()[:4]:
-            raise Exception('Invalid checksum')
+            cls.__logger.warning(
+                f"Invalid checksum: {checksum.hex()} != {hashlib.sha256(hashlib.sha256(payload).digest()).digest()[:4].hex()}")
+            return None
         return cls(command, payload)
 
     def __repr__(self):

@@ -11,7 +11,7 @@ from Wallet import Wallet
 
 config = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
 
-Blockchain = Blockchain(config=config["blockchain"])
+Blockchain = Blockchain(config=config["blockchain"], db_config=config["db"])
 genesis_block_path = Blockchain.get_genesis_block_path()
 
 Wallet = Wallet()
@@ -19,8 +19,9 @@ Miner = Miner(config=config["miner"])
 
 
 def mine_genesis():
-    coinbase_tx = Miner.create_coinbase_tx()
-    candidate_genesis = Block([coinbase_tx], b'\x00'*32, Blockchain.get_bits())
+    coinbase_tx = Miner.create_coinbase_tx(0)
+    candidate_genesis = Block(
+        [coinbase_tx], b'\x00'*32, Blockchain.get_bits_by_height(0))
     while True:
         candidate_header = candidate_genesis.get_header()
         if candidate_header.check_hash():

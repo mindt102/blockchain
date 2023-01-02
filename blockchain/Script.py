@@ -1,6 +1,6 @@
 
 from datastructure import VarInt
-from blockchain.operation import *
+from blockchain.opcode import *
 import utils
 
 
@@ -15,14 +15,21 @@ class Script:
 
     @classmethod
     def get_lock(cls, addr: str) -> 'Script':
+        """
+        ScriptPubKey = OP_DUP + OP_HASH160 + PubKeyHash + OP_EQUALVERIFY + OP_CHECKSIG
+        Stored in txout
+        """
         return cls([b'\x76', b'\xa9', utils.decode_base58check(addr), b'\x88', b'\xac'])
 
     @ classmethod
     def get_unlock(cls, signature: bytes, pubkey: bytes) -> 'Script':
+        """
+        ScriptSig = Signature + PubKey
+        Stored in txin
+        """
         return cls([signature, pubkey])
 
     def evaluate(self, z) -> bool:
-        # TODO: Validate a script @NHM
         cmds = self.cmds[:]
         stack = []
         alt_stack = []
@@ -95,5 +102,17 @@ class Script:
             count += 1
         return cls(cmds), stream
 
+    @classmethod
+    def lock_to_addr(cls, script: 'Script') -> str:
+        if (script.cmds[0] == b'\x76'
+                and script.cmds[1] == b'\xa9'
+                and script.cmds[3] == b'\x88'
+                and script.cmds[4] == b'\xac'):
+            return utils.encode_base58check(script.cmds[2])
+        raise ValueError("Invalid lock script")
+
     def __repr__(self):
-        return f'Script({self.cmds})'
+        return f'Script({self.to_json()})'
+
+    def to_json(self) -> dict:
+        return [cmd.hex() for cmd in self.cmds]

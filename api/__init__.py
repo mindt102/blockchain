@@ -1,5 +1,5 @@
 from flask import Flask
-from flask_restful import Api
+from flask_cors import CORS
 
 # from api.BlockApi import BlockApi, BlocksApi
 # from api.TransactionApi import TransactionApi, TransactionHashApi, TransactionBlockApi
@@ -9,9 +9,14 @@ from api.transaction_endpoints import blueprint as transaction_endpoint
 from api.addr_endpoints import blueprint as addr_endpoint
 
 app = Flask(__name__)
+
+CORS(app)
+
+
 app.register_blueprint(block_endpoint)
 app.register_blueprint(transaction_endpoint)
 app.register_blueprint(addr_endpoint)
+
 # api = Api(app)
 
 # Apis = [

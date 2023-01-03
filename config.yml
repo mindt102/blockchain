@@ -1,12 +1,12 @@
 blockchain:
   initial_reward: 50
-  initial_bits: 0x1f0fffff # 0x1d00ffff
+  initial_bits: 0xff0fffff # 0x1d00ffff
   difficulty_adjustment_interval: 50
   expected_mine_time: 1 # 2 minutes
   genesis_block_path: genesis_block.dat
 
 db:
-  name: ./data/bc.db
+  name: ./data/chain162.db
   sample: db.json
   reset: false
   genesis_block_path: genesis_block.dat

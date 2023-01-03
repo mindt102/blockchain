@@ -38,7 +38,7 @@ if __name__ == '__main__':
         # app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
 
         api_thread = threading.Thread(target=lambda: app.run(
-            host="0.0.0.0", port=5000, debug=True, use_reloader=False
+            host="0.0.0.0", port=3000, debug=True, use_reloader=False
         ), daemon=True)
         api_thread.start()
         while True:

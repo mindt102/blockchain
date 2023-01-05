@@ -36,10 +36,7 @@ def mine_genesis():
 def load_genesis():
     with open(genesis_block_path, 'rb') as f:
         block = Block.parse(f.read())[0]
-        print(block)
-        print(int.from_bytes(block.get_header().get_hash()))
-        print((utils.bits_to_target(block.get_header().get_bits())))
-        print(block.get_header().check_hash())
+        print(block.to_json())
 
 
 if os.path.exists(genesis_block_path):

@@ -30,10 +30,11 @@ def create_transaction(to_addr: str, amount: int, change_addr: str = address):
         total_input += utxo.get_amount()
     change = total_input - amount
     assert change >= 0
-    change_output = TxOut(change, addr=change_addr)
     spending_output = TxOut(amount, addr=to_addr)
-    outputs: list[TxOut] = [change_output, spending_output]
-
+    outputs: list[TxOut] = [spending_output]
+    if change > 0:
+        change_output = TxOut(change, addr=change_addr)
+        outputs.append(change_output)
     tx = Transaction(inputs, outputs)
     # sign_transaction(tx)
     tx.sign(privkey, pubkey)

@@ -22,9 +22,6 @@ if __name__ == '__main__':
         miner.start()
         api_thread.start()
 
-        # api_thread = threading.Thread(target=lambda: app.run(
-        #     host="0.0.0.0", port=3000, debug=True, use_reloader=False
-        # ), daemon=True)
         while True:
             # Keep the main thread alive to support keyboard interrupts
             time.sleep(.1)

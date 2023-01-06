@@ -1,14 +1,14 @@
 blockchain:
   initial_reward: 50
   initial_bits: 0x1f0fffff # 0x1d00ffff
-  difficulty_adjustment_interval: 50
-  expected_mine_time: 1 # 2 minutes
+  difficulty_adjustment_interval: 50 # in blocks
+  expected_mine_time: 1 # in minutes
   genesis_block_path: genesis_block.dat
 
 db:
   name: ./data/bc.db
   sample: db.json
-  reset: true
+  reset: false
   genesis_block_path: genesis_block.dat
 
 miner:
@@ -16,7 +16,7 @@ miner:
 
 network:
   max_peers: 10
-  min_peers: 2
+  min_peers: 3
   port: 8333
   peer_managing_rate: 1
   known_nodes:

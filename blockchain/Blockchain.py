@@ -358,6 +358,6 @@ class Blockchain(Role):
         # if self.is_ready():
         # self.__logger.debug(
         #     f"==========> Transaction inserted: {tx_hash.hex()[-4:]}")
-        network = self.get_network()
+        from network import network
         network.broadcast_new_tx(tx, excludes=[sender])
         miner.receive_new_tx(tx)

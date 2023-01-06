@@ -10,10 +10,12 @@ services:
   node:
     image: ucoin
     container_name: unode
-    ports:
-      - 3000:3000
     volumes:
       - ./data:/usr/src/app/data
       - ./secrets:/usr/src/app/secrets
-    # profiles:
-    #   - donotstart
+
+  bcui:
+    image: bc-ui
+    container_name: unode
+    ports:
+      - "3000:3000"

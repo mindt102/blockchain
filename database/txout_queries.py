@@ -117,6 +117,7 @@ ON txins.tx_id = txs2.id
 JOIN block_headers headers
 ON txs.block_header_id = headers.id
 WHERE addr = '{addr}'
+ORDER BY timestamp DESC;
 """
     data = db.fetchAll(query)
     results = []

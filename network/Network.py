@@ -177,7 +177,7 @@ class Network(Role):
         sock.bind((self.__host, self.__port))
         sock.listen(self.__maxpeers)
 
-        self.__logger.info(f"Listening on {self.__host}:{self.__port}")
+        self.__logger.info(f"Listening on {self.__port}...")
         return sock
 
     def __handle_message(self, host, data):
@@ -194,10 +194,6 @@ class Network(Role):
     def __handle_peer(self, client_sock, addr):
         host, port = addr
         try:
-            # data = client_sock.recv(1024)
-            # if data:
-            #     self.__handle_message(host, data)
-
             data = b''
             while self.active():
                 buffer = client_sock.recv(1024)
@@ -246,7 +242,7 @@ class Network(Role):
         else:
             return None
 
-    def get_peers(self):
+    def get_peers(self) -> dict[str, Peer]:
         return self.__peers.copy()
 
     def get_id(self):

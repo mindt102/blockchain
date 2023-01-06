@@ -82,6 +82,55 @@ def insert_tx(tx: Transaction, header_id: int, tx_index: int, db=None):
         # __logger.debug(f"Inserted txin: {txin}")
 
 
+@query_func
+def get_txhistory_by_addr(addr: str, db=None) -> list[Transaction]:
+    query = f"""
+SELECT tx_hash, txout.amount, timestamp, height block, txoutfrom.addr from_addr, txout.addr to_addr, 'IN' tx_type
+FROM tx_outputs txout
+JOIN transactions tx
+ON txout.tx_id = tx.id
+JOIN block_headers header
+ON tx.block_header_id = header.id
+JOIN tx_inputs txin
+ON txin.tx_id = tx.id
+LEFT OUTER JOIN tx_outputs txoutfrom
+ON txin.tx_output_id = txoutfrom.id
+WHERE txout.addr = '{addr}'
+AND ( txoutfrom.addr ISNULL 
+OR txoutfrom.addr <> '{addr}')
+GROUP BY txout.tx_id
+UNION
+SELECT tx_hash, txoutto.amount, timestamp, height block, txout.addr from_addr, txoutto.addr to_addr, 'OUT' tx_type
+FROM tx_outputs txout
+JOIN tx_inputs txin
+ON txin.tx_output_id = txout.id
+JOIN transactions tx
+ON txin.tx_id = tx.id
+JOIN block_headers header
+ON tx.block_header_id = header.id
+JOIN tx_outputs txoutto
+ON txoutto.tx_id = tx.id
+WHERE txout.addr = '{addr}'
+AND txoutto.addr <> '{addr}'
+GROUP BY tx_hash
+ORDER BY timestamp DESC;
+"""
+    data = db.fetchAll(query)
+    results = []
+    for row in data:
+        (tx_hash, amount, timestamp, block, from_addr, to_addr, tx_type) = row
+        results.append({
+            "tx_hash": tx_hash.hex(),
+            "amount": amount,
+            "timestamp": timestamp,
+            "block": block,
+            "from_addr": from_addr,
+            "to_addr": to_addr,
+            "tx_type": tx_type
+        })
+    return results
+
+
 def data_to_tx(tx_data: tuple, db=None) -> tuple[Transaction, int]:
     txid = tx_data[0]
     block_header_id = tx_data[1]

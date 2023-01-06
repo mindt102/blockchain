@@ -1,13 +1,12 @@
 from flask import Blueprint
 from flask_paginate import get_page_args
-from flask_restful import Resource, reqparse
+from flask_restful import reqparse
 
 import database
 import utils
 import wallet
 from blockchain import Blockchain, blockchain
 from utils.hashing import decode_base58check
-from Wallet import Wallet
 
 _logger = utils.get_logger(__name__)
 
@@ -26,6 +25,10 @@ def get_transaction(tx_hash):
     if not tx:
         return {"message": "Transaction not found"}, 404
     result = tx.to_json()
+    if not tx.is_coinbase():
+        prev_outputs = tx.get_prev_outputs()
+        for i, prev_tx_output in enumerate(prev_outputs):
+            result["inputs"][i]["prev_output"] = prev_tx_output.to_json()
     result["block"] = database.get_height_by_id(block_header_id)
     return result, 200
 
@@ -38,8 +41,15 @@ def get_transactions(height):
     block = database.get_block_by_height(height=height)
     if not block:
         return {"message": "Block not found"}, 404
-    txs = block.get_transactions()
-    results = [tx.to_json() for tx in txs[offset:offset + per_page]]
+    txs = block.get_transactions()[offset:offset + per_page]
+    results = []
+    for tx in txs:
+        tx_json = tx.to_json()
+        if not tx.is_coinbase():
+            prev_outputs = tx.get_prev_outputs()
+            for i, prev_tx_output in enumerate(prev_outputs):
+                tx_json["inputs"][i]["prev_output"] = prev_tx_output.to_json()
+        results.append(tx_json)
     return results, 200
 
 

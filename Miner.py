@@ -145,6 +145,12 @@ class Miner(Role):
     def get_spent_txouts(self) -> set[tuple[bytes, int]]:
         return self.__spent_txouts
 
+    def get_candidate_block(self) -> Block:
+        return self.__candidate_block
+
+    def get_mempool(self) -> list[Transaction]:
+        return list(self.__mempool.values())
+
 
 miner = Miner(config=utils.config['miner'])
 _logger.info('Miner initialized.')

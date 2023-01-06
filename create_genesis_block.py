@@ -7,14 +7,12 @@ import yaml
 import utils
 from blockchain import *
 from Miner import Miner
-from Wallet import Wallet
-
+from wallet import wallet
 config = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
 
 Blockchain = Blockchain(config=config["blockchain"], db_config=config["db"])
 genesis_block_path = Blockchain.get_genesis_block_path()
 
-Wallet = Wallet()
 Miner = Miner(config=config["miner"])
 
 

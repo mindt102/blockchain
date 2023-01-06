@@ -5,10 +5,12 @@ from blockchain.TxIn import TxIn
 from blockchain.TxOut import TxOut
 # import database
 # from database.DatabaseController import DatabaseController
-from utils import encode_base58, hash256
+from utils import encode_base58, hash256, get_logger
 
 
 class Transaction:
+    __logger = get_logger(__name__)
+
     def __init__(self, inputs: list[TxIn] = [], outputs: list[TxOut] = []) -> None:
         self.__inputs = inputs
         self.__outputs = outputs
@@ -98,3 +100,23 @@ class Transaction:
             return False
 
         return True
+
+    def get_prev_outputs(self) -> list[TxOut]:
+        if self.is_coinbase():
+            raise Exception("Coinbase transaction has no prev outputs")
+
+        txins = self.get_inputs()
+        import database
+        outputs = []
+        for txin in txins:
+            prev_tx_hash = txin.get_prev_tx_hash()
+            prev_tx, _ = database.get_tx_by_hash(prev_tx_hash)
+            if not prev_tx:
+                self.__logger.critical(
+                    f"Transaction {self.get_hash()} has invalid input {txin}")
+                return {"message": "Transaction not found"}, 404
+
+            output_index = txin.get_output_index()
+            prev_tx_output = prev_tx.get_outputs()[output_index]
+            outputs.append(prev_tx_output)
+        return outputs

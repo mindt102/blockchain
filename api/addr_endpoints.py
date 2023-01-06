@@ -15,15 +15,16 @@ def get_addr():
     return [address], 200
 
 
-@blueprint.route('/history/<string:addr>')
-def get_addr_history(addr):
+@blueprint.route('/utxo/<string:addr>')
+def get_addr_utxo(addr):
     if addr == "me":
         addr = address
     txouts = database.get_txouts_by_addr(addr)
     page, per_page, offset = get_page_args(
         page_parameter='page', per_page_parameter='per_page')
+    total = len(txouts)
     results = txouts[offset:offset + per_page]
-    return {"address": addr, "txouts": results}, 200
+    return {"address": addr, "txouts": results, "total": total}, 200
 
 
 @blueprint.route('/balance/<string:addr>')
@@ -33,3 +34,19 @@ def get_addr_balance(addr):
     balance = database.get_balance_by_addrs(addrs=[addr])
     return {"address": addr,
             "balance": balance}, 200
+
+
+@blueprint.route('/history/<string:addr>')
+def get_addr_history(addr):
+    if addr == "me":
+        addr = address
+    history = database.get_txhistory_by_addr(addr)
+    page, per_page, offset = get_page_args(
+        page_parameter='page', per_page_parameter='per_page')
+    total = len(history)
+    results = history[offset:offset + per_page]
+    return {
+        "address": addr,
+        "history": results,
+        "total": total
+    }

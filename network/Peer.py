@@ -98,3 +98,10 @@ class Peer:
 
     def get_port(self):
         return self.__port
+
+    def to_json(self):
+        return {
+            "host": self.__host,
+            "port": self.__port,
+            "is_active": self.__status["active"]
+        }

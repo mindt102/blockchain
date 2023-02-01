@@ -5,7 +5,7 @@ from flask_restful import reqparse
 import database
 import utils
 import wallet
-from blockchain import Blockchain, blockchain
+from blockchain import blockchain
 from utils.hashing import decode_base58check
 
 _logger = utils.get_logger(__name__)
@@ -25,10 +25,6 @@ def get_transaction(tx_hash):
     if not tx:
         return {"message": "Transaction not found"}, 404
     result = tx.to_json()
-    if not tx.is_coinbase():
-        prev_outputs = tx.get_prev_outputs()
-        for i, prev_tx_output in enumerate(prev_outputs):
-            result["inputs"][i]["prev_output"] = prev_tx_output.to_json()
     result["block"] = database.get_height_by_id(block_header_id)
     return result, 200
 
@@ -42,14 +38,7 @@ def get_transactions(height):
     if not block:
         return {"message": "Block not found"}, 404
     txs = block.get_transactions()[offset:offset + per_page]
-    results = []
-    for tx in txs:
-        tx_json = tx.to_json()
-        if not tx.is_coinbase():
-            prev_outputs = tx.get_prev_outputs()
-            for i, prev_tx_output in enumerate(prev_outputs):
-                tx_json["inputs"][i]["prev_output"] = prev_tx_output.to_json()
-        results.append(tx_json)
+    results = [tx.to_json() for tx in txs]
     return results, 200
 
 
@@ -71,7 +60,7 @@ def create_transaction():
         return {"message": "Invalid address"}, 400
     try:
         tx = wallet.create_transaction(receiver, amount)
-        _logger.debug(f"Created transaction: {tx}")
+        _logger.debug(f"Created transaction: {tx.get_hash().hex()[-4:]}")
         blockchain.receive_new_tx(tx)
         return tx.to_json(), 201
     except (AssertionError, ValueError) as e:

@@ -11,8 +11,8 @@ class DatabaseController:
     __logger = utils.get_logger(__name__)
 
     def __init__(self):
-        config = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
-        self.db_name = config["db"]["name"]
+        # config = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
+        self.db_name = utils.config["db"]["name"]
         self.conn = sqlite3.connect(self.db_name)
         self.cursor = self.conn.cursor()
 

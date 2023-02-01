@@ -25,8 +25,6 @@ class Block:
     def get_transactions(self) -> list[Transaction]:
         return self.__transactions
 
-    # def set_header(self, header: BlockHeader) -> None:
-    #     self.__header = header
     def to_json(self) -> dict:
         return {
             'header': self.__header.to_json(),
@@ -47,13 +45,4 @@ class Block:
             tx, stream = Transaction.parse(stream)
             txs.append(tx)
         block = cls(transactions=txs, header=header)
-        # block.set_header(header)
         return block, stream
-
-    # def insert(self):
-    #     # blockHeaderId = self.get_header().insert()
-    #     header_id = database.insert_header(self.get_header())
-    #     print(header_id)
-    #     for tx in self.get_transactions():
-    #         # tx.insert(header_id)
-    #         database.insert_tx(tx=tx, header_id=header_id)

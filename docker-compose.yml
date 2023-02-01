@@ -13,9 +13,12 @@ services:
     volumes:
       - ./data:/usr/src/app/data
       - ./secrets:/usr/src/app/secrets
-
-  bcui:
-    image: bc-ui
-    container_name: unode
     ports:
       - "3000:3000"
+  # bcui:
+  #   image: blockchain-ui
+  #   container_name: blockchain-ui
+  #   environment:
+  #     - BACKEND_URI=http://localhost:3000
+  #   ports:
+  #     - "3001:3000"

@@ -17,7 +17,7 @@ class Network(Role):
     '''Provide networking functionality'''
     __logger = utils.get_logger(__name__)
 
-    def __init__(self, config, *args, **kwargs):
+    def __init__(self, config):
         self.__id = random.getrandbits(64)
         self.__host = socket.gethostbyname(socket.gethostname())
 
@@ -25,6 +25,7 @@ class Network(Role):
         self.__maxpeers = config["max_peers"]
         self.__minpeers = config["min_peers"]
         self.__network_managing_rate = config["peer_managing_rate"]
+        self.__chain_syncing_rate = config["chain_syncing_rate"]
         self.__known_nodes = config["known_nodes"] if "known_nodes" in config else [
         ]
 
@@ -34,16 +35,16 @@ class Network(Role):
         self.__init_handlers()
         self.__blockchain_sync_started = False
 
-        super().__init__(network=self, *args, **kwargs)
         self.__max_peer_start_height = 0
 
         self.__is_ready = False
 
         self.__item_lock = threading.Lock()
         self.__requested_items = set()
+        super().__init__()
 
     def run(self):
-        self.__sock = self.__make_server_sock()  # TODO: test
+        self.__sock = self.__make_server_sock()
         self.__discover_known_nodes(self.__known_nodes)
         self.__start_network_manager()
         while self.active():
@@ -68,11 +69,9 @@ class Network(Role):
         for sock in rlist:
             if sock is self.__sock:
                 client_sock, addr = sock.accept()
-                # client_sock.setblocking(0)
                 threading.Thread(target=self.__handle_peer,
                                  args=(client_sock, addr)).start()
 
-    # @Role._rpc  # type: ignore
     def __start_network_manager(self):
         threading.Thread(target=self.__manage_network, daemon=True).start()
 
@@ -98,15 +97,10 @@ class Network(Role):
                 self.__logger.exception(
                     f"Could not connect to {host}:{port}")
 
-    def __start__sync_blockchain(self):
-        # from blockchain import blockchain
+    def __sync_local_blockchain(self):
         block_locator_hashes = blockchain.get_block_locator_hashes()
         getblocks_msg = GetBlocksMessage(block_locator_hashes)
-        self.broadcast(getblocks_msg)
-
-        self.__blockchain_sync_started = True
-        self.__logger.info(
-            f"Syncing blockchain with max peer height {self.__max_peer_start_height}")
+        self.__broadcast(getblocks_msg)
 
     def __manage_network(self):
         while True:
@@ -122,21 +116,26 @@ class Network(Role):
 
                 # Start blockchain sync if not started
                 if not self.__blockchain_sync_started:
-                    self.__start__sync_blockchain()
+                    self.__sync_local_blockchain()
+                    self.__blockchain_sync_started = True
+                    self.__logger.info(
+                        f"Syncing blockchain with max peer height {self.__max_peer_start_height}")
+                    self.__chain_sync_timer = 0
 
-                # blockchain: Blockchain = self.get_blockchain()
                 if not blockchain.is_ready():
                     height = database.get_max_height()
                     if height >= self.__max_peer_start_height:
                         self.__logger.info(
                             f"Blockchain is up to date. Height: {height}")
                         blockchain.set_ready()
-
-            # TODO: Check if peer is alive
+                    else:
+                        self.__chain_sync_timer += self.__network_managing_rate
+                        if self.__chain_sync_timer >= self.__chain_syncing_rate:
+                            self.__sync_local_blockchain()
+                            self.__chain_sync_timer = 0
 
             time.sleep(self.__network_managing_rate)
 
-    # @ Role._rpc  # type: ignore
     def broadcast_new_block(self, block, excludes=[]):
         '''Broadcast a new block to all peers'''
         blockmsg = BlockMessage(block)
@@ -153,10 +152,10 @@ class Network(Role):
         addrmsg = AddrMessage([network_address])
         self.__broadcast(addrmsg)
 
-    @ Role._rpc  # type: ignore
-    def broadcast(self, message, excludes=[]):
-        '''Broadcast a message to all peers'''
-        self.__broadcast(message, excludes)
+    # @ Role._rpc  # type: ignore
+    # def broadcast(self, message, excludes=[]):
+    #     '''Broadcast a message to all peers'''
+    #     self.__broadcast(message, excludes)
 
     def __broadcast(self, message, excludes=[]):
         self.__logger.info(

@@ -13,7 +13,8 @@ from Role import Role
 if __name__ == '__main__':
     __logger = utils.get_logger(__name__)
     try:
-        config = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
+        # config = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
+        config = utils.config
         run_event = threading.Event()
         run_event.set()
 

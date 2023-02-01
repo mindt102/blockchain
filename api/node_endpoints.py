@@ -1,10 +1,11 @@
 from flask import Blueprint
 from flask_paginate import get_page_args
 
-from network import network
+import utils
 from blockchain import blockchain
 from Miner import miner
-import utils
+from network import network
+
 _logger = utils.get_logger(__name__)
 
 blueprint = Blueprint('node', __name__, url_prefix='/node')
@@ -33,13 +34,7 @@ def get_peers():
 def get_mempool():
     results = []
     txs = miner.get_mempool()
-    for tx in txs:
-        tx_json = tx.to_json()
-        if not tx.is_coinbase():
-            prev_outputs = tx.get_prev_outputs()
-            for i, prev_tx_output in enumerate(prev_outputs):
-                tx_json["inputs"][i]["prev_output"] = prev_tx_output.to_json()
-        results.append(tx_json)
+    results = [tx.to_json() for tx in txs]
     return results, 200
 
 

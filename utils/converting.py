@@ -9,7 +9,6 @@ def ip_bytes_to_string(ip: bytes) -> str:
 def bits_to_target(bits: int) -> int:
     exponent = bits >> 24
     coefficient = bits & 0xFFFFFF
-    # print(hex(exponent), exponent, hex(coefficient))
     return coefficient * 256**(exponent - 3)
 
 
@@ -18,5 +17,4 @@ def target_to_bits(target: int) -> int:
     while target > 0xFFFFFF:
         target >>= 8
         exponent += 1
-    # print(hex(exponent), exponent, hex(target))
     return (exponent + 3 << 24) | target

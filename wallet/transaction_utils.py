@@ -41,19 +41,6 @@ def create_transaction(to_addr: str, amount: int, change_addr: str = address):
     return tx
 
 
-# def sign_transaction(tx: Transaction, privkey=privkey, pubkey=pubkey):
-#     '''Sign a transaction'''
-#     # print(f"Signing data: {tx.get_signing_data()}")
-#     # signature = Ecdsa.sign(tx.get_signing_data(),
-#     #                        privkey).toDer()
-#     tx.sign(privkey)
-#     # print(f"Signature: {signature}")
-#     # print(f"Private key: {privkey.toPem()}")
-#     pubkey = pubkey.toCompressed().encode()
-#     unlocking_script = Script.get_unlock(signature, pubkey)
-#     tx.set_unlocking_script(unlocking_script)
-
-
 def select_utxo(amount: int, utxo_set: dict[tuple[bytes, int], TxOut]) -> dict[tuple[bytes, int], TxOut]:
     '''Select UTXO to spend. utxo_set is a dict with key: (prev_hash, output_index) and value: TxOut'''
     total = 0

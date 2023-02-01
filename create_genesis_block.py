@@ -4,20 +4,17 @@ import os
 
 import yaml
 
-import utils
-from blockchain import *
-from Miner import Miner
-from wallet import wallet
-config = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
-
-Blockchain = Blockchain(config=config["blockchain"], db_config=config["db"])
-genesis_block_path = Blockchain.get_genesis_block_path()
-
-Miner = Miner(config=config["miner"])
+# import utils
+from blockchain import Block, Blockchain
+from Miner import miner
+# from wallet import wallet
+from database import genesis_block_path
+from utils import config
+# config = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
 
 
 def mine_genesis():
-    coinbase_tx = Miner.create_coinbase_tx(0)
+    coinbase_tx = miner.create_coinbase_tx(0)
     candidate_genesis = Block(
         [coinbase_tx], b'\x00'*32, Blockchain.get_bits_by_height(0))
     while True:

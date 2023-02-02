@@ -16,7 +16,7 @@ miner:
 
 network:
   max_peers: 10
-  min_peers: 2
+  min_peers: 3
   port: 8333
   peer_managing_rate: 1
   chain_syncing_rate: 5 # The rate at which the node send a getblocks message to its peers

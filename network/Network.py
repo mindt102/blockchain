@@ -100,7 +100,7 @@ class Network(Role):
     def __sync_local_blockchain(self):
         block_locator_hashes = blockchain.get_block_locator_hashes()
         getblocks_msg = GetBlocksMessage(block_locator_hashes)
-        self.__broadcast(getblocks_msg)
+        self.broadcast(getblocks_msg)
 
     def __manage_network(self):
         while True:
@@ -139,25 +139,25 @@ class Network(Role):
     def broadcast_new_block(self, block, excludes=[]):
         '''Broadcast a new block to all peers'''
         blockmsg = BlockMessage(block)
-        self.__broadcast(blockmsg, excludes)
+        self.broadcast(blockmsg, excludes)
 
     def broadcast_new_tx(self, tx, excludes=[]):
         '''Broadcast a new transaction to all peers'''
         txmsg = TransactionMessage(tx)
-        self.__broadcast(txmsg, excludes)
+        self.broadcast(txmsg, excludes)
 
     # @ Role._rpc  # type: ignore
     def broadcast_addr(self):
         network_address = NetworkAddress(ip=self.__host, port=self.__port)
         addrmsg = AddrMessage([network_address])
-        self.__broadcast(addrmsg)
+        self.broadcast(addrmsg)
 
     # @ Role._rpc  # type: ignore
     # def broadcast(self, message, excludes=[]):
     #     '''Broadcast a message to all peers'''
-    #     self.__broadcast(message, excludes)
+    #     self.broadcast(message, excludes)
 
-    def __broadcast(self, message, excludes=[]):
+    def broadcast(self, message, excludes=[]):
         self.__logger.info(
             f"Broadcasting {message.command}, excludes: {excludes}")
 

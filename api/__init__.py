@@ -23,6 +23,7 @@ app.register_blueprint(node_endpoint)
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 logging.getLogger("socketio").setLevel(logging.ERROR)
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
 
 def emit_event(event: str, data: dict = None):
@@ -42,5 +43,6 @@ api_thread = threading.Thread(target=lambda: socketio.run(
     port=3000,
     debug=True,
     use_reloader=False,
-    allow_unsafe_werkzeug=True
+    allow_unsafe_werkzeug=True,
+    log_output=False
 ), daemon=True)

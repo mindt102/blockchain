@@ -5,7 +5,7 @@ import os
 import yaml
 
 # import utils
-from blockchain import Block, Blockchain
+from blockchain import Block, blockchain
 from Miner import miner
 # from wallet import wallet
 from database import genesis_block_path
@@ -16,7 +16,7 @@ from utils import config
 def mine_genesis():
     coinbase_tx = miner.create_coinbase_tx(0)
     candidate_genesis = Block(
-        [coinbase_tx], b'\x00'*32, Blockchain.get_bits_by_height(0))
+        [coinbase_tx], b'\x00'*32, blockchain.get_bits_by_height(0))
     while True:
         candidate_header = candidate_genesis.get_header()
         if candidate_header.check_hash():

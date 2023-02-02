@@ -27,7 +27,7 @@ class Blockchain(Role):
 
     def get_bits_by_height(self, height: int) -> bytes:
         from blockchain import DIFFICULTY_ADJUSTMENT_INTERVAL, INITIAL_BITS, EXPECTED_MINE_TIME
-        return INITIAL_BITS  # TODO: remove this line
+        # return INITIAL_BITS  # TODO: remove this line
         if not DIFFICULTY_ADJUSTMENT_INTERVAL:
             return INITIAL_BITS
         if height < DIFFICULTY_ADJUSTMENT_INTERVAL:

@@ -1,6 +1,6 @@
 from blockchain.BlockHeader import BlockHeader
 from blockchain.Transaction import Transaction
-from utils import hash256
+from utils import hash256, compute_merkle_root
 
 
 class Block:
@@ -20,7 +20,8 @@ class Block:
 
     def compute_merkle_root(self) -> bytes:
         # TODO: implement
-        return hash256(self.__transactions[0].serialize())
+        return compute_merkle_root(self.__transactions)
+        # return hash256(self.__transactions[0].serialize())
 
     def get_transactions(self) -> list[Transaction]:
         return self.__transactions

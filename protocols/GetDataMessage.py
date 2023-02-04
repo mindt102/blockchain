@@ -47,8 +47,6 @@ class GetDataMessage:
                 pass
             elif item.get_type() == InvItem.MSG_BLOCK:
                 block_hash = item.get_hash()
-                # blockchain: Blockchain = network.get_blockchain()
-                # block = blockchain.get_block_by_hash(block_hash)
                 block = get_block_by_hash(block_hash)
                 if block:
                     blockmsg = BlockMessage(block)

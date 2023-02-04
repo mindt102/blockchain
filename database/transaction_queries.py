@@ -96,8 +96,6 @@ ON txin.tx_id = tx.id
 LEFT OUTER JOIN tx_outputs txoutfrom
 ON txin.tx_output_id = txoutfrom.id
 WHERE txout.addr = '{addr}'
-AND ( txoutfrom.addr ISNULL 
-OR txoutfrom.addr <> '{addr}')
 GROUP BY txout.tx_id
 UNION
 SELECT tx_hash, txoutto.amount, timestamp, height block, txout.addr from_addr, txoutto.addr to_addr, 'OUT' tx_type

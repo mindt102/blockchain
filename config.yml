@@ -8,7 +8,7 @@ blockchain:
 db:
   name: ./data/bc.db
   sample: db.json
-  reset: true
+  reset: false
   genesis_block_path: genesis_block.dat
 
 miner:

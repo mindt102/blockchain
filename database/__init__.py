@@ -7,9 +7,9 @@ from database.block_header_queries import (get_bits_by_height,
                                            get_header_by_height,
                                            get_height_by_id, get_max_height,
                                            get_top_header, insert_header)
-from database.BlockQueries import (get_block_by_hash, get_block_by_height,
-                                   get_blocks_by_height, get_top_block,
-                                   insert_block)
+from database.block_queries import (get_block_by_hash, get_block_by_height,
+                                    get_blocks_by_height, get_top_block,
+                                    insert_block)
 from database.DatabaseController import DatabaseController
 from database.generateQuery import GenerateQuery
 from database.transaction_queries import (get_tx_by_hash,

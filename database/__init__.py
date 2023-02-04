@@ -11,7 +11,7 @@ from database.block_queries import (get_block_by_hash, get_block_by_height,
                                     get_blocks_by_height, get_top_block,
                                     insert_block)
 from database.DatabaseController import DatabaseController
-from database.generateQuery import GenerateQuery
+from database.GenerateQuery import GenerateQuery
 from database.transaction_queries import (get_tx_by_hash,
                                           get_txhistory_by_addr, insert_tx)
 from database.txin_queries import insert_txin

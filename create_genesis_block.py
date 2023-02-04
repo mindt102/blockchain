@@ -2,15 +2,9 @@
 
 import os
 
-import yaml
-
-# import utils
 from blockchain import Block, blockchain
-from Miner import miner
-# from wallet import wallet
 from database import genesis_block_path
-from utils import config
-# config = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
+from Miner import miner
 
 
 def mine_genesis():

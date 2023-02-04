@@ -60,7 +60,8 @@ def create_transaction():
         return {"message": "Invalid address"}, 400
     try:
         tx = wallet.create_transaction(receiver, amount)
-        _logger.debug(f"Created transaction: {tx.get_hash().hex()[-4:]}")
+        tx_hash = tx.get_hash().hex()
+        _logger.info(f"Created transaction: {tx_hash[:4]}...{tx_hash[-4:]}")
         blockchain.receive_new_tx(tx)
         return tx.to_json(), 201
     except (AssertionError, ValueError) as e:

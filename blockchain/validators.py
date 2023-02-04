@@ -48,7 +48,7 @@ def validate_transaction(tx: Transaction) -> bool:
 
     # Check if there are any inputs or outputs
     if len(inputs) == 0 or len(outputs) == 0:
-        _logger.debug(
+        _logger.warning(
             f"Invalid input or output length: {len(inputs)} and {len(outputs)}")
         return False
 
@@ -89,29 +89,29 @@ def validate_block(block: Block) -> bool:
     header = block.get_header()
     # Check block header hash
     if not header.check_hash():
-        _logger.debug("Invalid header hash")
+        _logger.warning("Invalid header hash")
         return False
 
     txs = block.get_transactions()
     # Check first transaction is coinbase
     if not txs[0].is_coinbase():
-        _logger.debug("First tx is not coinbase")
+        _logger.warning("First tx is not coinbase")
         return False
 
     # Check merkle root received vs computed
     block_merkle_root = block.compute_merkle_root()
     if block_merkle_root != block.get_header().get_merkle_root():
-        _logger.debug("Invalid merkel root")
+        _logger.warning("Invalid merkel root")
         return False
 
     # Check validity of transactions
     for i in range(1, len(txs)):
         tx = txs[i]
         if tx.is_coinbase():
-            _logger.debug(f"Transaction #{i} is coinbase")
+            _logger.warning(f"Transaction #{i} is coinbase")
             return False
         if not validate_transaction(tx):
-            _logger.debug("Invalid transaction")
+            _logger.warning("Invalid transaction")
             return False
 
     return True

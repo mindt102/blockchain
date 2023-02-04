@@ -57,7 +57,6 @@ class Script:
                         return False
             else:
                 stack.append(cmd)
-            # self.__logger.debug(f"cmd: {cmd} - stack: {stack}")
         return True
 
     def raw_serialize(self) -> bytes:

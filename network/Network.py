@@ -176,7 +176,7 @@ class Network(Role):
         sock.bind((self.__host, self.__port))
         sock.listen(self.__maxpeers)
 
-        self.__logger.info(f"Listening on {self.__port}...")
+        self.__logger.info(f"Listening on port {self.__port}...")
         return sock
 
     def __handle_message(self, host, data):
@@ -184,7 +184,7 @@ class Network(Role):
         if not message:
             self.__logger.warning(f"Could not parse message from {host}")
             return
-        self.__logger.info(f"Recv: {message.command} from {host}")
+        # self.__logger.info(f"Recv: {message.command} from {host}")
         if message.command in self.__handlers:
             self.__handlers[message.command](self, host, message.payload)
         else:
@@ -218,8 +218,6 @@ class Network(Role):
         height = database.get_max_height()
         if peer:
             if not peer.is_version_sent():
-                self.__logger.debug(
-                    f"Send version to added peer {host}:{port}")
                 peer.send_version(self.__id, self.__host, self.__port, height)
         else:
             if len(self.__peers) == self.__maxpeers:

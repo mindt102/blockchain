@@ -27,7 +27,7 @@ def get_txs_by_header(header_id: int, db=None) -> list[Transaction]:
     data = db.selectAll(__tableName, where="block_header_id",
                         sortby="tx_index", params=(header_id,))
     if not data:
-        __logger.debug("No transactions found")
+        __logger.warning("No transactions found")
         return []
     txs = []
     for tx_data in data:
@@ -79,7 +79,6 @@ def insert_tx(tx: Transaction, header_id: int, tx_index: int, db=None):
         prev_tx_id = get_txid_by_hash(txin.get_prev_tx_hash(), db=db)
         insert_txin(txin=txin, txid=txid, index=index, prev_tx_id=prev_tx_id,
                     is_coinbase=tx.is_coinbase(), db=db)
-        # __logger.debug(f"Inserted txin: {txin}")
 
 
 @query_func

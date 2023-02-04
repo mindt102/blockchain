@@ -43,29 +43,23 @@ class Blockchain(Role):
 
         dtime = (prev_interval_end_block.get_header().get_timestamp(
         ) - prev_interval_start_block.get_header().get_timestamp()) // 60
-        self.__logger.debug(
-            f"Difficulty adjustment interval: {dtime:.2f} minutes")
+        self.__logger.info(
+            f"Adjusting difficulty. Previous periods: {dtime:.2f} minutes")
 
         prev_interval_bits = prev_interval_end_block.get_header().get_bits()
         prev_interval_target = bits_to_target(prev_interval_bits)
-        self.__logger.debug(
-            f"Previous interval target: {prev_interval_target:064x} - {prev_interval_target}")
 
         new_target = (prev_interval_target * dtime) // (
             EXPECTED_MINE_TIME * DIFFICULTY_ADJUSTMENT_INTERVAL)
-
-        self.__logger.debug(f"New target: {new_target:064x} - {new_target}")
-        self.__logger.debug(
-            f"Adjustment factor: {new_target / prev_interval_target:.4f}")
 
         initial_target = bits_to_target(INITIAL_BITS)
         if new_target > initial_target:
             new_target = initial_target
 
-        self.__logger.debug(f"New target: {new_target:064x} - {new_target}")
+        self.__logger.info(
+            f"New difficulty: {new_target/initial_target:.2f}")
 
         new_bits = target_to_bits(new_target)
-        self.__logger.debug(f"New bits: {new_bits:08x} - {new_bits}")
         return new_bits
 
     def is_ready(self) -> bool:
@@ -73,8 +67,6 @@ class Blockchain(Role):
 
     def set_ready(self) -> None:
         self.__is_ready = True
-        self.__logger.info(
-            f"Blockchain is ready. Current height: {database.get_max_height()}")
 
     def get_genesis_block(self) -> Block:
         return self.__genesis_block
@@ -136,9 +128,7 @@ class Blockchain(Role):
             UTXO set from the database excluding spent outputs in mempool
         '''
         utxo_set = database.get_utxo(addrs)
-        self.__logger.debug(f"UTXO set: {len(utxo_set)}")
         spent_set = miner.get_spent_txouts()
-        self.__logger.debug(f"Spend set: {len(spent_set)}")
         for key in spent_set:
             utxo_set.pop(key, None)
         return utxo_set
@@ -169,12 +159,12 @@ class Blockchain(Role):
 
         # Check if block is orphan
         if prev_block_hash in self.__orphan_blocks:
-            self.__logger.debug(
-                f"Block {block_hash.hex()[-4:]} already in orphan blocks")
+            self.__logger.info(
+                f"Block {block_hash.hex()[:4]}...{block_hash.hex()[-4:]} already in orphan blocks")
             return
         if prev_header is None:
             self.__logger.warning(
-                f"==========> Orphan block: {prev_block_hash.hex()[-4:]} - {block_hash.hex()[-4:]}")
+                f"Orphan block: {prev_block_hash.hex()[-4:]} - {block_hash.hex()[-4:]}")
             self.__orphan_blocks[prev_block_hash] = block
             return
 
@@ -189,8 +179,8 @@ class Blockchain(Role):
             return
 
         database.insert_block(block, height, db=db)
-        self.__logger.debug(
-            f"Block {block_hash.hex()[-4:]} inserted at height {height}")
+        self.__logger.info(
+            f"Block {block_hash.hex()[:4]}...{block_hash.hex()[-4:]} inserted at height {height}")
 
         parent_hash = block_hash
         valid_orphans = True
@@ -200,8 +190,8 @@ class Blockchain(Role):
             height += 1
             if valid_orphans and self.validate_block_bits(orphan_block.get_header().get_bits(), height):
                 database.insert_block(orphan_block, height, db=db)
-                self.__logger.debug(
-                    f"==========> Orphan block inserted: {database.get_block_by_hash(orphan_hash, db=db)}")
+                self.__logger.info(
+                    f"Orphan block inserted: {orphan_hash.hex()[:4]}...{orphan_hash.hex()[-4:]} at height {height}")
             else:
                 valid_orphans = False
             del self.__orphan_blocks[parent_hash]
@@ -229,8 +219,8 @@ class Blockchain(Role):
             existing_tx = miner.get_mempooltx_by_hash(tx_hash) or database.get_tx_by_hash(
                 tx_hash)[0]
             if existing_tx:
-                self.__logger.debug(
-                    f"Transaction {tx_hash.hex()[-4:]} already exists")
+                # self.__logger.debug(
+                #     f"Transaction {tx_hash.hex()[-4:]} already exists")
                 return
 
         # Check if transaction is valid

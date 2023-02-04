@@ -44,7 +44,7 @@ class Miner(Role):
         candidate_header = self.__candidate_block.get_header()
         nonce = candidate_header.get_nonce()
         if self.__config['logging_rate'] and nonce % self.__config['logging_rate'] == 0:
-            self.__logger.info(f'nonce: {nonce}')
+            self.__logger.info(f'Mining with nonce: {nonce}')
         if candidate_header.check_hash():
             self.__logger.info(
                 f'New block found: {candidate_header.get_hash().hex()[-4:]}')
@@ -77,8 +77,8 @@ class Miner(Role):
                 if tx_hash in self.__mempool:
                     del self.__mempool[tx_hash]
                     mempool_updated = True
-                    self.__logger.debug(
-                        f"Removed tx from mempool: {tx_hash.hex()[-4:]}")
+                    # self.__logger.debug(
+                    #     f"Removed tx from mempool: {tx_hash.hex()[-4:]}")
                 for txin in tx.get_inputs():
                     prev_tx_hash = txin.get_prev_tx_hash()
                     output_index = txin.get_output_index()
@@ -87,8 +87,6 @@ class Miner(Role):
                             (prev_tx_hash, output_index))
 
             mempool_txs = list(self.__mempool.values())
-            self.__logger.debug(
-                f"Mempool txs: {' '.join([tx.get_hash().hex()[-4:] for tx in mempool_txs])}")
             coinbase_tx = self.create_coinbase_tx(height=height)
 
             if mempool_updated:
@@ -100,10 +98,6 @@ class Miner(Role):
 
         self.__candidate_block = Block(
             transactions=candidate_txs, prev_block_hash=prev_block_hash, bits=bits)
-        self.__logger.debug(
-            f"Candidate transactions: {' '.join([tx.get_hash().hex()[-4:] for tx in candidate_txs])}")
-        self.__logger.debug(
-            f"Candidate bits: {hex(bits)}")
 
     @ Role._rpc  # type: ignore
     def receive_new_tx(self, tx: Transaction):
@@ -116,8 +110,6 @@ class Miner(Role):
             for txin in tx.get_inputs():
                 self.__spent_txouts.add(
                     (txin.get_prev_tx_hash(), txin.get_output_index()))
-            self.__logger.debug(
-                f"Added new tx to mempool: {tx.get_hash().hex()[-4:]}")
             mempool_txs = list(self.__mempool.values())
 
             from api import emit_event

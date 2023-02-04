@@ -4,7 +4,7 @@ from utils import bits_to_target
 
 
 def get_bits(db=None):
-    db_name = "./data/2835.db"
+    db_name = "./data/bc.db"
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     query = "SELECT height, bits, timestamp FROM block_headers GROUP BY bits ORDER BY height ASC"

@@ -24,6 +24,9 @@ network:
     - [blockchain-ucoin-1, 8333]
     - [blockchain-ucoin-2, 8333]
     - [blockchain-ucoin-3, 8333]
+    - [ucoin-ucoin-1, 8333]
+    - [ucoin-ucoin-2, 8333]
+    - [ucoin-ucoin-3, 8333]
 
 wallet:
   privatekey_path: ./secrets/privkey.pem

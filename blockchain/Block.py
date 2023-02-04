@@ -19,7 +19,7 @@ class Block:
         return self.__header
 
     def compute_merkle_root(self) -> bytes:
-        # TODO: implement
+        # TODO: test
         return compute_merkle_root(self.__transactions)
         # return hash256(self.__transactions[0].serialize())
 

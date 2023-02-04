@@ -2,7 +2,7 @@ import json
 import os
 
 from database.DatabaseController import DatabaseController
-from database.GenerateQuery import GenerateQuery
+from database.generateQuery import GenerateQuery
 
 
 def createDb(dbName: str, dbSample: str, isDebug: bool = True):

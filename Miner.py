@@ -102,11 +102,14 @@ class Miner(Role):
     @ Role._rpc  # type: ignore
     def receive_new_tx(self, tx: Transaction):
         with self.__mempool_lock:
-            if tx.get_hash() in self.__mempool:
+            tx_hash = tx.get_hash()
+            if tx_hash in self.__mempool:
                 self.__logger.warning(
-                    f"Tx already in mempool: {tx.get_hash()}")
+                    f"Tx already in mempool: {tx_hash.hex()[:4]}...{tx_hash.hex()[-4:]}")
                 return
-            self.__mempool[tx.get_hash()] = tx
+            self.__mempool[tx_hash] = tx
+            self.__logger.info(
+                f"New tx added to mempool: {tx_hash.hex()[:4]}...{tx_hash.hex()[-4:]}")
             for txin in tx.get_inputs():
                 self.__spent_txouts.add(
                     (txin.get_prev_tx_hash(), txin.get_output_index()))

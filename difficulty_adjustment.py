@@ -19,7 +19,7 @@ df["target"] = df["bits"].apply(bits_to_target)
 periods = pd.DataFrame()
 periods["time"] = df["timestamp"].diff().dropna() / 60
 periods["blocks_per_min"] = 50 / periods["time"]
-periods["difficulty"] = (df["target"] / df["target"][0]).shift(1)
+periods["difficulty"] = (df["target"][0] / df["target"]).shift(1)
 periods["blocks"] = (df["height"] - 50).apply(str) + \
     "-" + (df["height"] - 1).apply(str)
 

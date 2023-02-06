@@ -158,11 +158,15 @@ class Blockchain(Role):
             prev_block_hash, db=db)
 
         # Check if block is orphan
+        from network import network
+
         if prev_block_hash in self.__orphan_blocks:
+            network.request_parent(prev_block_hash, sender)
             self.__logger.info(
                 f"Block {block_hash.hex()[:4]}...{block_hash.hex()[-4:]} already in orphan blocks")
             return
         if prev_header is None:
+            network.request_parent(prev_block_hash, sender)
             self.__logger.warning(
                 f"Orphan block: {prev_block_hash.hex()[-4:]} - {block_hash.hex()[-4:]}")
             self.__orphan_blocks[prev_block_hash] = block
@@ -199,7 +203,6 @@ class Blockchain(Role):
 
         if self.get_top_hash() == block_hash and self.__is_ready:
             from api import emit_event
-            from network import network
 
             miner.receive_new_block()
             network.broadcast_new_block(block, excludes=[sender])

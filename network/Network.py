@@ -9,7 +9,7 @@ import database
 
 import utils
 from network import NetworkAddress, NetworkEnvelope, Peer
-from protocols import AddrMessage, BlockMessage, GetBlocksMessage, InvItem, TransactionMessage, messages
+from protocols import AddrMessage, BlockMessage, GetBlocksMessage, InvItem, TransactionMessage, messages, GetDataMessage
 from Role import Role
 
 
@@ -152,6 +152,13 @@ class Network(Role):
         addrmsg = AddrMessage([network_address])
         self.broadcast(addrmsg)
 
+    def request_parent(self, parent_hash, peer):
+        item = InvItem(InvItem.MSG_BLOCK, parent_hash)
+        getdata_msg = GetDataMessage([item])
+        if peer and peer in self.get_peers() and self.get_peers[peer].is_handshake_done():
+            self.get_peers[peer].send(getdata_msg)
+        else:
+            self.broadcast(getdata_msg)
     # @ Role._rpc  # type: ignore
     # def broadcast(self, message, excludes=[]):
     #     '''Broadcast a message to all peers'''

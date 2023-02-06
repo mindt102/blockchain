@@ -13,7 +13,7 @@ class InvMessage:
     command = b"inv"
     __logger = utils.get_logger(__name__)
 
-    def __init__(self, items: list) -> None:
+    def __init__(self, items: list[InvItem]) -> None:
         self.__items = items
         self.__count = VarInt(len(items))
 

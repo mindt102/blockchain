@@ -5,10 +5,12 @@ import pandas as pd
 
 from utils import bits_to_target
 
+DB_NAME = "./data/bc.db"
+
 
 def get_bits():
-    db_name = "./data/bc.db"
-    conn = sqlite3.connect(db_name)
+    print(f"Getting bits history from database {DB_NAME}...")
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
 
     # Get the bits history
@@ -36,11 +38,11 @@ df["target"] = df["bits"].apply(bits_to_target)
 periods = pd.DataFrame()
 periods["time"] = df["timestamp"].diff().dropna() / 60
 periods["blocks_per_min"] = 50 / periods["time"]
-periods["difficulty"] = (df["target"][0] / df["target"]).shift(1)
+periods["difficulty"] = pd.to_numeric(
+    (df["target"][0] / df["target"]).shift(1))
 periods["blocks"] = (df["height"] - 50).apply(str) + \
     "-" + (df["height"] - 1).apply(str)
-
-print(periods)
+print(periods.round(2))
 print()
 print(
     f"Current difficulty: {df['target'][0] / bits_to_target(current[1])} at height {current[0]}")
@@ -48,6 +50,10 @@ print(
 plt.figure(figsize=(12, 8))
 # Plot the difficulty as bars
 plt.bar(periods["blocks"], periods["difficulty"], width=0.8)
+# Add the difficulty value on top of each bar
+for i, v in enumerate(periods["difficulty"]):
+    plt.text(i, v, f"{v:.2f}", color="black", va="bottom",
+             ha="center")
 plt.xlabel("Blocks")
 plt.ylabel("Difficulty")
 plt.xticks(rotation=45, ha='right', rotation_mode="anchor")
@@ -62,4 +68,5 @@ plt.text(0, 1, "1 block per minute", color="black",
 
 plt.ylabel("Blocks per minute")
 plt.title("Difficulty and blocks per minute")
+
 plt.savefig("difficulty_and_blocks_per_min.png")

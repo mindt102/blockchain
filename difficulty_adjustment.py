@@ -14,7 +14,7 @@ def get_bits():
     cursor = conn.cursor()
 
     # Get the bits history
-    query = "SELECT height, bits, timestamp FROM block_headers GROUP BY bits ORDER BY height ASC"
+    query = "SELECT height, bits, timestamp FROM block_headers WHERE mod(height, 50) = 0"
     cursor.execute(query)
     conn.commit()
     bits_history = cursor.fetchall()
@@ -47,26 +47,26 @@ print()
 print(
     f"Current difficulty: {df['target'][0] / bits_to_target(current[1])} at height {current[0]}")
 
-plt.figure(figsize=(12, 8))
-# Plot the difficulty as bars
-plt.bar(periods["blocks"], periods["difficulty"], width=0.8)
-# Add the difficulty value on top of each bar
-for i, v in enumerate(periods["difficulty"]):
-    plt.text(i, v, f"{v:.2f}", color="black", va="bottom",
-             ha="center")
-plt.xlabel("Blocks")
+# Select the first 20 periods
+periods = periods.iloc[:20]
+
+plt.bar(periods["blocks"], periods["difficulty"])
+plt.xlabel("Block Periods")
 plt.ylabel("Difficulty")
 plt.xticks(rotation=45, ha='right', rotation_mode="anchor")
+# plt.title("Difficulty of the first 20 periods (50 blocks each)")
 
-# Plot the blocks per minute as a line in the same figure
-plt.twinx()
+plt.tight_layout()
+plt.savefig("difficulty.png")
+
+plt.clf()
 plt.plot(periods["blocks"], periods["blocks_per_min"], color="red")
+plt.xlabel("Block Periods")
+plt.ylabel("Mining Rate (bpm)")
+plt.xticks(rotation=45, ha='right', rotation_mode="anchor")
 
 plt.axhline(y=1, color="black", linestyle="--")
-plt.text(0, 1, "1 block per minute", color="black",
-         va="bottom", fontweight="bold")
+plt.legend(["Mining Rate", "1 bpm"])
 
-plt.ylabel("Blocks per minute")
-plt.title("Difficulty and blocks per minute")
-
-plt.savefig("difficulty_and_blocks_per_min.png")
+plt.tight_layout()
+plt.savefig("mining_rate.png")

@@ -20,7 +20,7 @@ def insert_txin(txin: TxIn, txid: int, index: int, prev_tx_id: int, is_coinbase:
     if not is_coinbase:
         txout_id = get_txout_id(prev_tx_id, txin.get_output_index())
         if not txout_id:
-            __logger.debug("Transaction output not found")
+            __logger.warning("Transaction output not found")
     else:
         txout_id = None
     values = (
@@ -37,7 +37,7 @@ def get_txin_by_tx(txid: int, db=None) -> list[TxIn]:
     data = db.selectAll(__tableName, where="tx_id",
                         sortby="txin_index", params=(txid,))
     if not data:
-        __logger.debug("No transaction inputs found")
+        __logger.warning("No transaction inputs found")
         return []
     inputs = []
     for d in data:

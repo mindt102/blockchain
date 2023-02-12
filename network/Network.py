@@ -9,7 +9,7 @@ import database
 
 import utils
 from network import NetworkAddress, NetworkEnvelope, Peer
-from protocols import AddrMessage, BlockMessage, GetBlocksMessage, InvItem, TransactionMessage, messages
+from protocols import AddrMessage, BlockMessage, GetBlocksMessage, InvItem, TransactionMessage, messages, GetDataMessage
 from Role import Role
 
 
@@ -152,6 +152,13 @@ class Network(Role):
         addrmsg = AddrMessage([network_address])
         self.broadcast(addrmsg)
 
+    def request_parent(self, parent_hash, peer):
+        item = InvItem(InvItem.MSG_BLOCK, parent_hash)
+        getdata_msg = GetDataMessage([item])
+        if peer and peer in self.get_peers() and self.get_peers[peer].is_handshake_done():
+            self.get_peers[peer].send(getdata_msg)
+        else:
+            self.broadcast(getdata_msg)
     # @ Role._rpc  # type: ignore
     # def broadcast(self, message, excludes=[]):
     #     '''Broadcast a message to all peers'''
@@ -176,7 +183,7 @@ class Network(Role):
         sock.bind((self.__host, self.__port))
         sock.listen(self.__maxpeers)
 
-        self.__logger.info(f"Listening on {self.__port}...")
+        self.__logger.info(f"Listening on port {self.__port}...")
         return sock
 
     def __handle_message(self, host, data):
@@ -184,7 +191,7 @@ class Network(Role):
         if not message:
             self.__logger.warning(f"Could not parse message from {host}")
             return
-        self.__logger.info(f"Recv: {message.command} from {host}")
+        # self.__logger.info(f"Recv: {message.command} from {host}")
         if message.command in self.__handlers:
             self.__handlers[message.command](self, host, message.payload)
         else:
@@ -218,8 +225,6 @@ class Network(Role):
         height = database.get_max_height()
         if peer:
             if not peer.is_version_sent():
-                self.__logger.debug(
-                    f"Send version to added peer {host}:{port}")
                 peer.send_version(self.__id, self.__host, self.__port, height)
         else:
             if len(self.__peers) == self.__maxpeers:

@@ -62,7 +62,7 @@ class Peer:
 
             envelope = NetworkEnvelope(message.command, message.serialize())
             sock.sendall(envelope.serialize())
-            self.__logger.info(f"Sent: {message.command} to {self.__host}")
+            # self.__logger.info(f"Sent: {message.command} to {self.__host}")
         except OSError:
             self.deactivate()
             return False

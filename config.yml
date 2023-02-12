@@ -9,7 +9,7 @@ db:
   name: ./data/bc.db
   sample: db.json
   reset: false
-  genesis_block_path: genesis_block.dat
+  genesis_block_path: ./data/genesis_block.dat
 
 miner:
   logging_rate: 500 # Set to 0 to disable logging

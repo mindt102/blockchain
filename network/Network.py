@@ -155,7 +155,7 @@ class Network(Role):
     def request_parent(self, parent_hash, peer):
         item = InvItem(InvItem.MSG_BLOCK, parent_hash)
         getdata_msg = GetDataMessage([item])
-        if peer and peer in self.get_peers() and self.get_peers[peer].is_handshake_done():
+        if peer and peer in self.get_peers() and self.get_peers()[peer].is_handshake_done():
             self.get_peers[peer].send(getdata_msg)
         else:
             self.broadcast(getdata_msg)

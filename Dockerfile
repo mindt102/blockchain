@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
-# ENV PYTHONPATH "${PYTHONPATH}:./src"
 
 COPY . .
+RUN ["python", "create_genesis_block.py"]
 CMD [ "python", "-u", "./main.py" ]

@@ -1,7 +1,7 @@
 import logging
 import threading
 
-from flask import Flask, request
+from flask import Flask, request, redirect
 from flask_cors import CORS
 from flask_socketio import SocketIO
 
@@ -15,6 +15,14 @@ _logger = utils.get_logger(__name__)
 app = Flask(__name__)
 
 CORS(app)
+
+PORT = utils.config['wallet']['api_port']
+
+
+@app.route('/')
+def default_redirect():
+    return redirect(f"http://localhost:{PORT}/blocks", code=302)
+
 
 app.register_blueprint(block_endpoint)
 app.register_blueprint(transaction_endpoint)
@@ -40,7 +48,7 @@ def connect():
 api_thread = threading.Thread(target=lambda: socketio.run(
     app,
     host="0.0.0.0",
-    port=3000,
+    port=PORT,
     debug=True,
     use_reloader=False,
     allow_unsafe_werkzeug=True,

@@ -30,3 +30,4 @@ network:
 
 wallet:
   privatekey_path: ./secrets/privkey.pem
+  api_port: 3000

@@ -7,4 +7,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 RUN ["python", "create_genesis_block.py", "-f"]
+RUN ["rm", "./secrets/privkey.pem"]
 CMD [ "python", "-u", "./main.py" ]

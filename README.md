@@ -1,3 +1,7 @@
+# Documentation
+
+The details report and documentation is available at [ProjectReport.pdf](ProjectReport.pdf)
+
 # Quick Start
 
 ## 1. Install the docker and docker-compose

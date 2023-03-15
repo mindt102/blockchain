@@ -2,8 +2,6 @@ __pycache__/
 .venv/
 .vscode/
 draft.py
-privkey.pem
 tempCodeRunnerFile.py
-*.db
-secrets/*
 test.py
+.DS_Store

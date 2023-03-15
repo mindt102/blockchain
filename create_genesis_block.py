@@ -1,27 +1,17 @@
 '''A script to create a genesis block'''
 
+import argparse
 import os
 
-import yaml
-
-import utils
-from blockchain import *
-from Miner import Miner
-from Wallet import Wallet
-
-config = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
-
-Blockchain = Blockchain(config=config["blockchain"], db_config=config["db"])
-genesis_block_path = Blockchain.get_genesis_block_path()
-
-Wallet = Wallet()
-Miner = Miner(config=config["miner"])
+from blockchain import Block, blockchain
+from database import genesis_block_path
+from Miner import miner
 
 
 def mine_genesis():
-    coinbase_tx = Miner.create_coinbase_tx(0)
+    coinbase_tx = miner.create_coinbase_tx(0)
     candidate_genesis = Block(
-        [coinbase_tx], b'\x00'*32, Blockchain.get_bits_by_height(0))
+        [coinbase_tx], b'\x00'*32, blockchain.get_bits_by_height(0))
     while True:
         candidate_header = candidate_genesis.get_header()
         if candidate_header.check_hash():
@@ -36,11 +26,17 @@ def mine_genesis():
 def load_genesis():
     with open(genesis_block_path, 'rb') as f:
         block = Block.parse(f.read())[0]
-        print(block)
-        print(int.from_bytes(block.get_header().get_hash()))
-        print((utils.bits_to_target(block.get_header().get_bits())))
-        print(block.get_header().check_hash())
+        print(block.to_json())
 
+
+# Add -f flag to force overwrite
+parser = argparse.ArgumentParser()
+parser.add_argument('-f', '--force', action='store_true')
+args = parser.parse_args()
+
+if args.force:
+    mine_genesis()
+    exit()
 
 if os.path.exists(genesis_block_path):
     print('Genesis block already exists')

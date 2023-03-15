@@ -62,7 +62,7 @@ class Peer:
 
             envelope = NetworkEnvelope(message.command, message.serialize())
             sock.sendall(envelope.serialize())
-            self.__logger.info(f"Sent: {message.command} to {self.__host}")
+            # self.__logger.info(f"Sent: {message.command} to {self.__host}")
         except OSError:
             self.deactivate()
             return False
@@ -98,3 +98,10 @@ class Peer:
 
     def get_port(self):
         return self.__port
+
+    def to_json(self):
+        return {
+            "host": self.__host,
+            "port": self.__port,
+            "is_active": self.__status["active"]
+        }

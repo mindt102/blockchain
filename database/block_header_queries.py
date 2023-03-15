@@ -97,7 +97,7 @@ def get_header_by_hash(header_hash: bytes, db: DatabaseController = None) -> tup
     header_data = db.selectOne(table_name=__table_name,
                                where="hash", field="*", params=(header_hash,))
     if not header_data:
-        return None, None, None
+        return None, None, 0
     return data_to_header(header_data)
 
 

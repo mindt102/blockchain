@@ -43,7 +43,7 @@ def get_block_by_height(height: int, db=None) -> Block:
 
 def get_blocks_by_height(start: int, end: int, db=None) -> list[Block]:
     blocks = []
-    for height in range(start, end):
+    for height in range(start, max(end, -1), -1):
         block = get_block_by_height(height, db=db)
         if not block:
             break

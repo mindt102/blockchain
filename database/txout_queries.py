@@ -29,7 +29,7 @@ def get_txout_by_tx(txId: int, db=None) -> list[TxOut]:
     data = db.selectAll(__tableName, where="tx_id",
                         sortby="txout_index", params=(txId,))
     if not data:
-        __logger.debug("Transaction output not found")
+        __logger.warning("Transaction output not found")
         return []
     outputs = []
     for d in data:
@@ -81,10 +81,8 @@ def get_utxo(addrs: list[str] = [], db=None) -> dict[tuple[bytes, int], TxOut]:
         FROM tx_outputs txout
         JOIN tx_inputs txin
         ON txout.id = txin.tx_output_id;
-    """  # , 'AtMa6huHpUv3uPPpwqjLV3YaHp8GGQWA5'
-    # __logger.debug(query)
+    """
     data = db.fetchAll(query)
-    # __logger.debug(len(data))
     result = dict()
     if not data:
         return result
@@ -98,9 +96,7 @@ def get_utxo(addrs: list[str] = [], db=None) -> dict[tuple[bytes, int], TxOut]:
             __logger.error("Transaction not found")
             raise Exception("Transaction not found")
         tx_hash = tx.get_hash()
-        # __logger.debug(f"tx_hash: {tx_hash}, txout_index: {txout_index}")
         result[(tx_hash, txout_index)] = txout
-    # __logger.debug(len(result))
     return result
 
 
@@ -117,6 +113,7 @@ ON txins.tx_id = txs2.id
 JOIN block_headers headers
 ON txs.block_header_id = headers.id
 WHERE addr = '{addr}'
+ORDER BY timestamp DESC;
 """
     data = db.fetchAll(query)
     results = []

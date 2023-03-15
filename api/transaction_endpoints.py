@@ -1,13 +1,12 @@
 from flask import Blueprint
 from flask_paginate import get_page_args
-from flask_restful import Resource, reqparse
+from flask_restful import reqparse
 
 import database
 import utils
 import wallet
-from blockchain import Blockchain, blockchain
+from blockchain import blockchain
 from utils.hashing import decode_base58check
-from Wallet import Wallet
 
 _logger = utils.get_logger(__name__)
 
@@ -38,8 +37,8 @@ def get_transactions(height):
     block = database.get_block_by_height(height=height)
     if not block:
         return {"message": "Block not found"}, 404
-    txs = block.get_transactions()
-    results = [tx.to_json() for tx in txs[offset:offset + per_page]]
+    txs = block.get_transactions()[offset:offset + per_page]
+    results = [tx.to_json() for tx in txs]
     return results, 200
 
 
@@ -61,7 +60,8 @@ def create_transaction():
         return {"message": "Invalid address"}, 400
     try:
         tx = wallet.create_transaction(receiver, amount)
-        _logger.debug(f"Created transaction: {tx}")
+        tx_hash = tx.get_hash().hex()
+        _logger.info(f"Created transaction: {tx_hash[:4]}...{tx_hash[-4:]}")
         blockchain.receive_new_tx(tx)
         return tx.to_json(), 201
     except (AssertionError, ValueError) as e:

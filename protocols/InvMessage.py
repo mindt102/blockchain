@@ -13,7 +13,7 @@ class InvMessage:
     command = b"inv"
     __logger = utils.get_logger(__name__)
 
-    def __init__(self, items: list) -> None:
+    def __init__(self, items: list[InvItem]) -> None:
         self.__items = items
         self.__count = VarInt(len(items))
 
@@ -43,10 +43,7 @@ class InvMessage:
                 f"Received inv message from {host} before handshake")
             return
         inv, _ = cls.parse(payload)
-        cls.__logger.info(inv)
         filtered_items = []
-        # miner: Miner = network.get_miner()
-        # blockchain: Blockchain = network.get_blockchain()
 
         # Filter out items that are already in mempool or blockchain
         for item in inv.get_items():
@@ -74,7 +71,6 @@ class InvMessage:
             network.add_requested(item.get_hash())
 
         if not filtered_items:
-            cls.__logger.debug("No new items to request")
             return
 
         if len(filtered_items) == 1:
@@ -92,6 +88,4 @@ class InvMessage:
                 end = min((i + 1) * chunk_size, len(filtered_items))
                 data = filtered_items[start:end]
                 getdata = GetDataMessage(data)
-                cls.__logger.debug(
-                    f"#{i} Sending {getdata} to {receiver.get_host()}: {receiver.get_port()}")
                 receiver.send(getdata)

@@ -30,27 +30,15 @@ def create_transaction(to_addr: str, amount: int, change_addr: str = address):
         total_input += utxo.get_amount()
     change = total_input - amount
     assert change >= 0
-    change_output = TxOut(change, addr=change_addr)
     spending_output = TxOut(amount, addr=to_addr)
-    outputs: list[TxOut] = [change_output, spending_output]
-
+    outputs: list[TxOut] = [spending_output]
+    if change > 0:
+        change_output = TxOut(change, addr=change_addr)
+        outputs.append(change_output)
     tx = Transaction(inputs, outputs)
     # sign_transaction(tx)
     tx.sign(privkey, pubkey)
     return tx
-
-
-# def sign_transaction(tx: Transaction, privkey=privkey, pubkey=pubkey):
-#     '''Sign a transaction'''
-#     # print(f"Signing data: {tx.get_signing_data()}")
-#     # signature = Ecdsa.sign(tx.get_signing_data(),
-#     #                        privkey).toDer()
-#     tx.sign(privkey)
-#     # print(f"Signature: {signature}")
-#     # print(f"Private key: {privkey.toPem()}")
-#     pubkey = pubkey.toCompressed().encode()
-#     unlocking_script = Script.get_unlock(signature, pubkey)
-#     tx.set_unlocking_script(unlocking_script)
 
 
 def select_utxo(amount: int, utxo_set: dict[tuple[bytes, int], TxOut]) -> dict[tuple[bytes, int], TxOut]:

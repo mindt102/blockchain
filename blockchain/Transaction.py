@@ -5,20 +5,37 @@ from blockchain.TxIn import TxIn
 from blockchain.TxOut import TxOut
 # import database
 # from database.DatabaseController import DatabaseController
-from utils import encode_base58, hash256
+from utils import encode_base58, hash256, get_logger
 
 
 class Transaction:
+    __logger = get_logger(__name__)
+
     def __init__(self, inputs: list[TxIn] = [], outputs: list[TxOut] = []) -> None:
         self.__inputs = inputs
         self.__outputs = outputs
 
     def to_json(self) -> dict:
-        return {
+        result = {
             'hash': self.get_hash().hex(),
             'inputs': [txin.to_json() for txin in self.__inputs],
             'outputs': [txout.to_json() for txout in self.__outputs]
         }
+        # Include previous output for each input
+        if not self.is_coinbase():
+            import database
+            for i, txin in enumerate(self.get_inputs()):
+                prev_tx_hash = txin.get_prev_tx_hash()
+                output_index = txin.get_output_index()
+
+                prev_tx, _ = database.get_tx_by_hash(prev_tx_hash)
+                if not prev_tx:
+                    self.__logger.critical(
+                        f"Transaction {self.get_hash()} has invalid input {txin}")
+
+                prev_tx_output = prev_tx.get_outputs()[output_index]
+                result['inputs'][i]['prev_output'] = prev_tx_output.to_json()
+        return result
 
     def __repr__(self) -> str:
         return f'''Transaction({self.to_json()})'''

@@ -10,7 +10,7 @@ class GetDataMessage:
     command = b"getdata"
     __logger = utils.get_logger(__name__)
 
-    def __init__(self, items: list) -> None:
+    def __init__(self, items: list[InvItem]) -> None:
         self.__items = items
         self.__count = VarInt(len(items))
 
@@ -47,8 +47,6 @@ class GetDataMessage:
                 pass
             elif item.get_type() == InvItem.MSG_BLOCK:
                 block_hash = item.get_hash()
-                # blockchain: Blockchain = network.get_blockchain()
-                # block = blockchain.get_block_by_hash(block_hash)
                 block = get_block_by_hash(block_hash)
                 if block:
                     blockmsg = BlockMessage(block)
